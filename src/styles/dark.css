@@ -165,13 +165,33 @@ body.theme-dark .airbagStatus {
   color: #1a1206;
 }
 
-/* Google Maps paints its own container while tiles are still in flight; keep
-   that flash black rather than a light grey slab. */
-body.theme-dark .mapBackground,
-body.theme-dark .mapBackground > div,
-body.theme-dark .gm-style,
-body.theme-dark .gm-style > div:first-child {
-  background-color: #0b0b0c !important;
+/* Only the container behind the map, never .gm-style or its children - Google
+   renders the tile layer into those, and painting them opaque blanks the map.
+   The firmware's nightStyle is a dark grey base (#3F3F41), not black, so this
+   is just the flash before tiles arrive. */
+body.theme-dark .mapBackground {
+  background-color: #2b2b2d;
 }
 
 /* The speed-limit sign stays white - it is a road sign, not chrome. */
+
+/* PRND: the active letter is pure black in the day theme, which vanished on a
+   black screen - the selected gear is the one thing in that cluster that must
+   read at a glance. */
+body.theme-dark .gearSelectIcon { color: rgba(255, 255, 255, 0.42); }
+body.theme-dark .gearSelectIcon.active { color: #ffffff; }
+body.theme-dark .gearSelectIcon:hover { background-color: rgba(255, 255, 255, 0.08); }
+
+/* Status-bar text and the battery readout. */
+body.theme-dark .topMenuBar,
+body.theme-dark .clock,
+body.theme-dark .outsideTemp,
+body.theme-dark .batteryStatus,
+body.theme-dark .userProfileName {
+  color: var(--t-ink);
+}
+
+body.theme-dark .topMenuBar img,
+body.theme-dark .carStatusIcons img {
+  filter: invert(1) brightness(1.15);
+}

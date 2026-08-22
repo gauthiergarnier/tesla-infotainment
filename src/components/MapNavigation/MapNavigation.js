@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { getImagePath } from '../../utils/assetPaths';
 import { TESLA_MAP_STYLES } from '../../config/mapStyles';
+import TripPlanner from '../TripPlanner/TripPlanner';
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete, DirectionsRenderer } from '@react-google-maps/api';
 import CarLock from '../CarLock/CarLock';
 import Clock from '../Clock/Clock';
@@ -22,7 +23,7 @@ const MAP_ID = process.env.REACT_APP_GOOGLE_MAPS_MAP_ID || undefined;
 
 const libraries = ['places'];
 
-export function MapNavigation({ onWifiClick }) {
+export function MapNavigation({ onWifiClick, showTrip = false, onEndTrip }) {
   const [center, setCenter] = useState({ lat: 33.9210278, lng: -118.33005555555555 }); // Default location
   const [mapType, setMapType] = useState('roadmap');
   const [trafficLayer, setTrafficLayer] = useState(null);
@@ -273,7 +274,8 @@ export function MapNavigation({ onWifiClick }) {
           <div className="airbagStatusText">PASSENGER AIRBAG&nbsp;<span className="airbagStatusOff">OFF</span></div>
         </div>
       </div>
-      <div className="mapOverlayWrapper">
+      {showTrip && <TripPlanner onEndTrip={onEndTrip} />}
+      <div className={`mapOverlayWrapper${showTrip ? ' withTrip' : ''}`}>
         {isLoaded && (
           <Autocomplete
             onLoad={onAutocompleteLoad}

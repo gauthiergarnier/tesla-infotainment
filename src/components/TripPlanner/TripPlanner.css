@@ -1,0 +1,266 @@
+/*
+ * Proportions taken from the press render of the current Model Y display: the
+ * panel is roughly a fifth of the screen width, the tab strip sits above the
+ * card rather than inside it, and the current-leg strip is pinned to the bottom
+ * with the map running underneath everything.
+ */
+
+.tripPlanner {
+  position: absolute;
+  /* The status bar is a flow element at the top of .MapNavigation, so an
+     absolutely positioned panel has to clear it by hand. */
+  top: 2.4em;
+  left: 0;
+  bottom: 0;
+  width: 27%;
+  min-width: 210px;
+  max-width: 320px;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  padding: 0.6em 0.7em 0.7em;
+  box-sizing: border-box;
+  font-size: clamp(9px, 1.05vw, 13px);
+  color: #1c1c1e;
+  pointer-events: auto;
+}
+
+/* --------------------------------------------------------------- tab strip */
+
+.tpTabs {
+  display: flex;
+  gap: 1.1em;
+  padding: 0.2em 0.4em 0.7em;
+  flex: 0 0 auto;
+}
+
+.tpTab {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 1.02em;
+  color: rgba(28, 28, 30, 0.55);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tpTab.active { color: #1c1c1e; font-weight: 600; }
+
+/* -------------------------------------------------------------------- card */
+
+.tpCard {
+  background: rgba(250, 250, 250, 0.94);
+  border-radius: 10px;
+  padding: 0.9em 0.9em 0.7em;
+  flex: 0 1 auto;
+  overflow-y: auto;
+  box-shadow: rgba(0, 0, 0, 0.22) 0 4px 14px -4px;
+}
+
+.tpSummary { margin-bottom: 0.9em; }
+
+.tpSummaryRow {
+  display: flex;
+  gap: 0.9em;
+  line-height: 1.5;
+}
+
+.tpStrong { font-weight: 600; }
+.tpDim { color: rgba(28, 28, 30, 0.55); }
+
+/* ------------------------------------------------------------------- stops */
+
+.tpStops {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.tpStop {
+  position: relative;
+  padding: 0 0 1em 1.7em;
+}
+
+.tpStop:last-child { padding-bottom: 0.3em; }
+
+/* map-pin markers, threaded together like the route itself */
+.tpPin {
+  position: absolute;
+  left: 0;
+  top: 0.15em;
+  width: 0.85em;
+  height: 1.1em;
+  background: #e5484d;
+  border-radius: 50% 50% 50% 50% / 42% 42% 62% 62%;
+}
+
+.tpPin::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0.3em;
+  width: 0.3em;
+  height: 0.3em;
+  margin-left: -0.15em;
+  background: #fff;
+  border-radius: 50%;
+}
+
+.tpPin--dest { background: #6b6b70; }
+
+.tpThread {
+  position: absolute;
+  left: 0.4em;
+  top: 1.4em;
+  bottom: 0.2em;
+  width: 1px;
+  background: rgba(28, 28, 30, 0.18);
+}
+
+.tpStopHead {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+  align-items: baseline;
+}
+
+.tpStopName { font-weight: 600; line-height: 1.3; }
+.tpStopEta { white-space: nowrap; }
+
+.tpStopMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6em;
+  color: rgba(28, 28, 30, 0.55);
+  line-height: 1.6;
+}
+
+.tpStopKind { min-height: 1em; }
+.tpStopWeather { display: inline-flex; align-items: center; gap: 0.3em; white-space: nowrap; }
+.tpWeather--sun { color: #f0a020; }
+.tpWeather--cloud { color: #9a9aa0; }
+.tpCharge { white-space: nowrap; }
+
+/* ---------------------------------------------------------------- battery */
+
+.tpBattery { display: inline-flex; align-items: center; gap: 0.35em; }
+
+.tpBatteryShell {
+  position: relative;
+  width: 1.5em;
+  height: 0.8em;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  padding: 1px;
+  box-sizing: border-box;
+  opacity: 0.75;
+}
+
+.tpBatteryFill {
+  display: block;
+  height: 100%;
+  background: currentColor;
+  border-radius: 1px;
+}
+
+.tpBatteryLabel { font-variant-numeric: tabular-nums; }
+
+/* ------------------------------------------------------------------ links */
+
+.tpLinks {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35em;
+  padding-top: 0.7em;
+}
+
+.tpLink {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: #2f6fed;
+  cursor: pointer;
+  text-align: left;
+}
+
+/* --------------------------------------------------------- current leg */
+
+.tpLeg {
+  margin-top: auto;
+  background: rgba(250, 250, 250, 0.94);
+  border-radius: 10px;
+  padding: 0.75em 0.9em 0.6em;
+  box-shadow: rgba(0, 0, 0, 0.22) 0 4px 14px -4px;
+}
+
+.tpLegRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.6em;
+  align-items: center;
+  line-height: 1.6;
+}
+
+.tpLegTarget { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.tpProgress {
+  height: 2px;
+  background: rgba(28, 28, 30, 0.16);
+  border-radius: 1px;
+  margin: 0.5em 0 0.6em;
+  overflow: hidden;
+}
+
+.tpProgressFill { display: block; height: 100%; background: #2f6fed; }
+
+.tpLegActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6em;
+}
+
+.tpEndTrip,
+.tpMore {
+  border: 0;
+  background: none;
+  padding: 0.15em 0.2em;
+  font: inherit;
+  color: #1c1c1e;
+  cursor: pointer;
+}
+
+.tpMore { letter-spacing: 0.05em; }
+
+/* ------------------------------------------------------------- dark theme */
+
+body.theme-dark .tripPlanner { color: #f2f2f4; }
+body.theme-dark .tpTab { color: rgba(242, 242, 244, 0.5); }
+body.theme-dark .tpTab.active { color: #ffffff; }
+
+body.theme-dark .tpCard,
+body.theme-dark .tpLeg {
+  background: rgba(28, 28, 30, 0.94);
+  box-shadow: rgba(0, 0, 0, 0.5) 0 4px 16px -4px;
+}
+
+body.theme-dark .tpDim,
+body.theme-dark .tpStopMeta { color: rgba(242, 242, 244, 0.52); }
+
+body.theme-dark .tpThread { background: rgba(242, 242, 244, 0.2); }
+body.theme-dark .tpProgress { background: rgba(242, 242, 244, 0.18); }
+body.theme-dark .tpLink { color: #5b9cff; }
+body.theme-dark .tpProgressFill { background: #5b9cff; }
+body.theme-dark .tpEndTrip,
+body.theme-dark .tpMore { color: #f2f2f4; }
+
+/* With a trip up, the Navigate field is gone and the floating map controls sit
+   clear of the panel - matching the real display. */
+.mapOverlayWrapper.withTrip .custom-autocomplete-container,
+.mapOverlayWrapper.withTrip .navBtn {
+  display: none;
+}

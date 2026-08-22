@@ -43,6 +43,7 @@ const launchParams = (() => {
     expanded: q.get('expanded') === '1',
     record: q.get('record') === '1',
     theme: q.get('theme'),
+    trip: q.get('trip') === '1',
   };
 })();
 
@@ -70,6 +71,7 @@ function App() {
   const [isBrowserExpanded, setIsBrowserExpanded] = useState(launchParams.expanded);
   const [leftPanelSize, setLeftPanelSize] = useState(DEFAULT_LEFT_PANEL_SIZE);
   const [isRecordMode, setIsRecordMode] = useState(launchParams.record);
+  const [isTripActive, setIsTripActive] = useState(launchParams.trip);
 
   const appsTopShelf = [
     'wipers',
@@ -458,7 +460,11 @@ function App() {
                 className="rightPanel"
                 id="rightPanel"
               >
-                <MapNavigation onWifiClick={handleWifiClick} />
+                <MapNavigation
+                  onWifiClick={handleWifiClick}
+                  showTrip={isTripActive}
+                  onEndTrip={() => setIsTripActive(false)}
+                />
                 <VerticalSliderPanel 
                   isOpen={isSliderOpen} 
                   activeIcon={activeNavIcon}
