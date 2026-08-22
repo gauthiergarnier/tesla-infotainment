@@ -51,7 +51,18 @@ function hideNonExteriorMeshes(root) {
     const name = o.name || '';
     if (HIDE_PATTERNS.some((r) => r.test(name)) || FLOOR_PATTERNS.some((r) => r.test(name))) {
       o.visible = false;
+      return;
     }
+    // These models are meshopt-compressed with KHR_mesh_quantization, and the
+    // bounding sphere that comes back from quantised position attributes is not
+    // trustworthy - three.js then frustum-culls geometry that is squarely in
+    // shot, and the car renders as nothing at all. Recompute it, and stop
+    // culling anything that still looks wrong.
+    if (o.geometry) {
+      o.geometry.computeBoundingBox();
+      o.geometry.computeBoundingSphere();
+    }
+    o.frustumCulled = false;
   });
 }
 

@@ -4,14 +4,19 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
+/*
+ * No <React.StrictMode>.
+ *
+ * In dev, React 18 StrictMode mounts every component, unmounts it, then mounts
+ * it again. react-three-fiber's <Canvas> disposes its WebGL renderer on that
+ * unmount, and what is left is a dead canvas: render loop stopped,
+ * gl.info.memory.geometries back to 0, nothing drawn. The car card renders
+ * empty even though the scene graph is perfectly correct.
+ *
+ * This only ever bit the dev server - production builds do not double-mount -
+ * but the dev server is exactly where demos get recorded.
+ */
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+root.render(<App />);
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
