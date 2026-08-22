@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect, useLayoutEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Stage, useGLTF, OrbitControls } from "@react-three/drei";
+import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from 'three';
 import { useSpring, a } from '@react-spring/three';
 import { getCarModelPath } from '../../utils/assetPaths';
@@ -33,7 +33,16 @@ const isPaint = (m) => !!m && /^TESLAPAINT_/.test(m.name || '');
  * shows up as an opaque black quad under the car, which is exactly what it
  * looked like before this was added.
  */
-const HIDE_PATTERNS = [/_GLOBAL$/i, /Defrost/i, /Airflow/i, /Marker$/i];
+const HIDE_PATTERNS = [
+  /_GLOBAL$/i,
+  /Defrost/i,
+  /Airflow/i,
+  /Marker$/i,
+  // Light FX. TESLAFX_Headlights_Projections is an 11 m x 7.8 m flat quad - the
+  // beam cast on the road - so leaving it visible does not just add glow, it
+  // triples the model's bounding box and throws off any camera fit.
+  /^TESLAFX_/i,
+];
 const FLOOR_PATTERNS = [/Ground/i, /Shadow/i, /^Floor/i];
 
 function hideNonExteriorMeshes(root) {
@@ -173,6 +182,23 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
   useLayoutEffect(() => {
     applyPaint(scene, colorByKey(colorKey));
   }, [scene, colorKey]);
+
+  /* Recentre once the scene is final. drei's <Center> measures on mount, but
+     the wheels are attached and the FX meshes hidden in the effects above, so
+     its offset would be taken from the wrong bounding box - which parked the
+     camera inside the bodywork. */
+  useLayoutEffect(() => {
+    scene.position.set(0, 0, 0);
+    scene.updateMatrixWorld(true);
+    const box = new THREE.Box3();
+    scene.traverse((o) => {
+      if (o.isMesh && o.visible && o.geometry) box.expandByObject(o);
+    });
+    if (!box.isEmpty()) {
+      const centre = box.getCenter(new THREE.Vector3());
+      scene.position.set(-centre.x, -box.min.y, -centre.z);
+    }
+  }, [scene, vehicle, wheelScene, colorKey]);
 
   useEffect(() => {
     frunkRef.current = scene.getObjectByName(PARTS.frunk) || null;
@@ -389,13 +415,17 @@ export function VehicleModel({
           suspends forever and the whole 3D tree - model included - never
           mounts. This loads the studio panorama the tesla-3d-renders pipeline
           settled on for matching the app, straight off our own origin. */}
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[3, 5, 4]} intensity={0.9} />
       <SceneProbe />
       <StudioEnvironment url={STUDIO_ENV_URL} />
       <Suspense fallback={null}>
-        {/* shadows off: Stage's accumulative shadow catcher renders as an
-            opaque black plane against this scene's flat background, and the
-            car card on the real display has no cast shadow anyway. */}
-        <Stage environment={null} shadows={false} adjustCamera={1.6} intensity={0.35} key={stageKey}>
+        {/* Deliberately NOT drei's <Stage>. Stage normalises whatever it is
+            given to a unit box, which blew a 4.7 m Model 3 up to 14.7 m and put
+            the camera (fixed at 5 m) inside the car - the scene was rendering
+            correctly the whole time, from within the bodywork. These models are
+            already authored in metres, so they only need centring. */}
+        <group key={stageKey}>
           <Model
             rotateToFrunk={rotateToFrunk}
             rotateToTrunk={rotateToTrunk}
@@ -404,7 +434,7 @@ export function VehicleModel({
             colorKey={colorKey}
             wheelKey={wheelKey}
           />
-        </Stage>
+        </group>
       </Suspense>
       <ControlledOrbitControls />
     </Canvas>
