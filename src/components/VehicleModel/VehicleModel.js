@@ -187,7 +187,10 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
   const [doorStates, setDoorStates] = useState({});
   const animationProgressRef = useRef(0);
   const isAnimatingRef = useRef(false);
-  const defaultRotation = Math.PI;
+  /* Tesla's Ego models face -Z - FrontMarker sits at z = -2.35 - and the camera
+     looks in from +X/+Y/+Z. Rotating the model by pi therefore showed us the
+     tail; the car card on the real display is a front three-quarter view. */
+  const defaultRotation = 0;
 
   useLayoutEffect(() => mountWheels(scene, vehicle, wheelScene), [scene, vehicle, wheelScene]);
 
@@ -419,7 +422,7 @@ export function VehicleModel({
 }) {
   /* A 4.7 m car viewed at 45 degrees projects about 4.8 m across. At the old
      5 m the frame cut the bumpers off; 7 m leaves it room to breathe. */
-  const distance = 7;
+  const distance = 6.2;
   const horizontalAngle = Math.PI / 4;
   const verticalAngle = activeGear === 'D' ? Math.PI / 3 : Math.PI / 5.14;
 

@@ -2,7 +2,7 @@
   "name": "tesla-ui",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://jamesalmeida.github.io/tesla-infotainment",
+  "homepage": "https://gauthiergarnier.github.io/tesla-infotainment",
   "dependencies": {
     "@mui/material": "^5.16.7",
     "@react-google-maps/api": "^2.19.3",
@@ -29,7 +29,9 @@
     "eject": "react-scripts eject",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
-    "import:firmware-model": "bash scripts/import-firmware-model.sh"
+    "import:firmware-model": "bash scripts/import-firmware-model.sh",
+    "build:local": "PUBLIC_URL= react-scripts build",
+    "serve:local": "npx --yes serve -s build -l 3222"
   },
   "eslintConfig": {
     "extends": [
