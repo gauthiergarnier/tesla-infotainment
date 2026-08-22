@@ -195,3 +195,48 @@ body.theme-dark .topMenuBar img,
 body.theme-dark .carStatusIcons img {
   filter: invert(1) brightness(1.15);
 }
+
+/* ------------------------------------------------- status bar, dark theme */
+
+/* The bar paints a white gradient in the day theme; on black that has to go,
+   and every descendant that sets its own colour needs bringing with it. */
+body.theme-dark .topMenuBar {
+  background: linear-gradient(to top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.55));
+  color: var(--t-ink);
+}
+
+body.theme-dark .topMenuBar *,
+body.theme-dark .clock *,
+body.theme-dark .outsideTemp * {
+  color: var(--t-ink);
+}
+
+/* ...except the amber badge, which keeps its own palette. */
+body.theme-dark .airbagStatus,
+body.theme-dark .airbagStatus * {
+  color: #1a1206;
+}
+
+/* ------------------------------------------------------------ media card */
+
+/* On the real display the media card is an inset rounded card sitting on the
+   screen background, not a full-bleed white slab. */
+body.theme-dark .musicPanel {
+  background-color: var(--t-card);
+  box-shadow: none;
+  border-radius: 12px;
+}
+
+body.theme-dark .musicPanel,
+body.theme-dark .musicPanel * {
+  color: var(--t-ink);
+}
+
+body.theme-dark .trackTitle { color: var(--t-ink); }
+body.theme-dark .trackArtist,
+body.theme-dark .albumArtist { color: var(--t-ink-dim); }
+
+body.theme-dark .musicProgressBar,
+body.theme-dark .progressBar {
+  background-color: rgba(255, 255, 255, 0.18);
+}

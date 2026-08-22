@@ -112,9 +112,12 @@
 }
 
 .navIcons.teslaIcon {
-    height: 21%;
+    /* The project's SVGs carry their padding inside the artwork and render
+       about 31px tall in a 103px bar; Tesla's glyphs are bare 50x50 squares.
+       Matching on height keeps the two sets optically equal. */
+    height: 30%;
     width: auto;
     max-width: none;
-    padding: 0 18px;
+    padding: 0 17px;
     object-fit: contain;
 }
