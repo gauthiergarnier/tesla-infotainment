@@ -69,6 +69,11 @@ function hideNonExteriorMeshes(root) {
 // Equirectangular studio panorama, used as scene.environment.
 const STUDIO_ENV_URL = (process.env.PUBLIC_URL || '') + '/env/studio_ibl.png';
 
+// The car card has no panel of its own on the real display - it sits straight
+// on the screen background, so the clear colour has to follow the theme.
+const isDarkTheme = () =>
+  typeof document !== 'undefined' && document.body.classList.contains('theme-dark');
+
 /**
  * Tint the paint materials.
  *
@@ -361,7 +366,7 @@ function ControlledOrbitControls() {
 
   useEffect(() => {
     if (!controlsRef.current) return undefined;
-    controlsRef.current.target.set(0, -0.5, 0);
+    controlsRef.current.target.set(0, 0.6, 0);
     controlsRef.current.update();
 
     const controls = controlsRef.current;
@@ -412,7 +417,9 @@ export function VehicleModel({
   colorKey = DEFAULT_COLOR,
   wheelKey,
 }) {
-  const distance = 5;
+  /* A 4.7 m car viewed at 45 degrees projects about 4.8 m across. At the old
+     5 m the frame cut the bumpers off; 7 m leaves it room to breathe. */
+  const distance = 7;
   const horizontalAngle = Math.PI / 4;
   const verticalAngle = activeGear === 'D' ? Math.PI / 3 : Math.PI / 5.14;
 
@@ -438,7 +445,7 @@ export function VehicleModel({
          logged. Measuring undebounced makes it deterministic. */
       resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
     >
-      <color attach="background" args={["#f1f1f1"]} />
+      <color attach="background" args={[isDarkTheme() ? "#000000" : "#f1f1f1"]} />
       <SceneErrorBoundary>
       {/* Lighting is built here rather than with drei's <Environment>: its
           presets pull an HDRI from a CDN and, when that request hangs, Stage

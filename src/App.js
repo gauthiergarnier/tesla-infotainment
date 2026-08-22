@@ -19,6 +19,7 @@ import GearSelect from './components/GearSelect/GearSelect';
 import ErrorScreen from './components/ErrorScreen/ErrorScreen';
 import { useDots } from './utils/dots';
 import './App.css';
+import './styles/dark.css';
 
 const formatAppName = (appName) => {
   return appName
@@ -41,6 +42,7 @@ const launchParams = (() => {
     url: q.get('url'),
     expanded: q.get('expanded') === '1',
     record: q.get('record') === '1',
+    theme: q.get('theme'),
   };
 })();
 
@@ -192,6 +194,15 @@ function App() {
       leftPanelRef.current.resize(DEFAULT_LEFT_PANEL_SIZE);
     }
   }, [activeGear]);
+
+  /* Dark theme. The car switches on the clock; ?theme=day|night pins it, which
+     keeps recorded takes deterministic and drives the map style too. */
+  useEffect(() => {
+    const hour = new Date().getHours();
+    const dark = launchParams.theme === 'night'
+      || (launchParams.theme !== 'day' && (hour < 7 || hour >= 19));
+    document.body.classList.toggle('theme-dark', dark);
+  }, []);
 
   // Record mode: nothing on screen but the centre display, so a window
   // capture needs no cropping.

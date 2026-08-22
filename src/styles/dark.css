@@ -1,0 +1,177 @@
+/*
+ * Dark theme.
+ *
+ * Matched against a press render of the current Model Y centre display: the
+ * screen is pure black rather than a dark grey, cards are near-black raised
+ * panels with generous radius, and the only saturated colour anywhere is the
+ * app icons, the route line and the amber passenger-airbag badge.
+ *
+ * The car ships this as its own `darkDay` asset theme; the icon set has a
+ * matching cut, so swapping TESLA_APP_ICONS to the darkDay files is the natural
+ * follow-up (see src/config/teslaIcons.js).
+ *
+ * Enabled with ?theme=night, which also flips the map to the firmware's
+ * nightStyle.
+ */
+
+body.theme-dark {
+  --t-screen: #000000;
+  --t-card: #1c1c1e;
+  --t-card-raised: #242426;
+  --t-line: #2f2f31;
+  --t-ink: #ffffff;
+  --t-ink-dim: #8e8e93;
+  --t-ink-faint: #5a5a5e;
+  --t-accent: #3e7bfa;
+}
+
+/* ---------------------------------------------------------------- surfaces */
+
+body.theme-dark #root { background: #141414; }
+
+body.theme-dark #displayBezel {
+  background-color: var(--t-screen);
+  border-color: #2a2a2a;
+}
+
+body.theme-dark .leftPanel,
+body.theme-dark .rightPanel,
+body.theme-dark .panelResizeHandle {
+  background-color: var(--t-screen);
+}
+
+body.theme-dark .leftPanel { box-shadow: none; }
+
+body.theme-dark .panelResizeHandle::before { background-color: #3a3a3c; }
+
+/* The car sits on black with its own reflection, not in a light card. */
+body.theme-dark .carModelWrapper { background: var(--t-screen) !important; }
+
+/* ------------------------------------------------------------------- text */
+
+body.theme-dark .carStatusIcons,
+body.theme-dark .carModelStatus,
+body.theme-dark .frunk,
+body.theme-dark .trunk,
+body.theme-dark .temperature {
+  color: var(--t-ink);
+}
+
+body.theme-dark .carModelStatus .toggleFrunk,
+body.theme-dark .carModelStatus .toggleTrunk {
+  color: var(--t-ink-dim);
+}
+
+body.theme-dark .toggleFrunk { border-right-color: var(--t-line); }
+body.theme-dark .toggleTrunk { border-left-color: var(--t-line); }
+
+body.theme-dark .speedLimit {
+  background-color: var(--t-ink);
+  color: #000;
+}
+
+/* ------------------------------------------------------------------ cards */
+
+body.theme-dark .musicPanel,
+body.theme-dark .vertical-slider-panel,
+body.theme-dark .appShelfContainer,
+body.theme-dark .modal {
+  background-color: var(--t-card);
+  color: var(--t-ink);
+}
+
+body.theme-dark .musicPanel { border-radius: 12px; }
+
+body.theme-dark .appTopShelf { border-bottom-color: var(--t-line); }
+
+body.theme-dark .appShelfIconText { color: var(--t-ink-dim); }
+
+body.theme-dark .customizeBtn { color: var(--t-accent); }
+
+body.theme-dark .slider-handle { background-color: #48484a; }
+
+/* Tesla's icon set is a light-on-dark cut in the darkDay theme; until those are
+   imported, invert the day glyphs so they read on black. */
+body.theme-dark .navIcons.teslaIcon,
+body.theme-dark .appShelfIcon img.teslaIcon {
+  filter: invert(1) brightness(1.25);
+}
+
+/* --------------------------------------------------------------- browser */
+
+body.theme-dark .browserHost { background: var(--t-card); }
+
+body.theme-dark .teslaBrowser {
+  --wb-ink: #e6e6e6;
+  --wb-ink-dim: #8e8e93;
+  --wb-chrome: #1c1c1e;
+  --wb-field: #2c2c2e;
+  --wb-line: #3a3a3c;
+}
+
+body.theme-dark .wbFavorites { background: #202022; }
+body.theme-dark .wbFavoriteGlyph { background: #2c2c2e; color: var(--t-ink); }
+
+/* -------------------------------------------------------------- bottom bar */
+
+body.theme-dark .btmNavBar {
+  background-color: var(--t-screen);
+  border-color: #232325;
+  border-top: 1px solid #1e1e20;
+}
+
+/* ------------------------------------------------------ floating controls */
+
+/* The map's floating pills and the media transport keys are near-white in the
+   day theme; at night the car uses a dark translucent fill with a hairline. */
+body.theme-dark .floatingBtn,
+body.theme-dark .navBtn,
+body.theme-dark .squareBtn,
+body.theme-dark .compassDirection,
+body.theme-dark .mapButtonsContainer > * {
+  background-color: rgba(28, 28, 30, 0.92) !important;
+  color: var(--t-ink);
+  border: 1px solid var(--t-line);
+}
+
+body.theme-dark .floatingBtn input,
+body.theme-dark .navBtn input {
+  background: transparent;
+  color: var(--t-ink);
+}
+
+body.theme-dark .floatingBtn input::placeholder { color: var(--t-ink-dim); }
+
+body.theme-dark .floatingBtn img,
+body.theme-dark .squareBtn img,
+body.theme-dark .compassDirection img,
+body.theme-dark .musicBtn img {
+  filter: invert(1) brightness(1.2);
+}
+
+body.theme-dark .musicBtn {
+  background-color: rgba(36, 36, 38, 0.9) !important;
+  color: var(--t-ink);
+}
+
+body.theme-dark .musicBtn:active {
+  background-color: rgba(58, 58, 60, 0.95) !important;
+}
+
+/* The passenger-airbag badge is the one saturated element in the status bar,
+   and it keeps its amber in both themes. */
+body.theme-dark .airbagStatus {
+  background-color: #f0b429 !important;
+  color: #1a1206;
+}
+
+/* Google Maps paints its own container while tiles are still in flight; keep
+   that flash black rather than a light grey slab. */
+body.theme-dark .mapBackground,
+body.theme-dark .mapBackground > div,
+body.theme-dark .gm-style,
+body.theme-dark .gm-style > div:first-child {
+  background-color: #0b0b0c !important;
+}
+
+/* The speed-limit sign stays white - it is a road sign, not chrome. */
