@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen';
 import { VehicleModel } from './components/VehicleModel/VehicleModel';
-import { getImagePath } from './utils/assetPaths';
+import { getImagePath, getAppIconPath, isTeslaIcon } from './utils/assetPaths';
 import { UserProfileProvider } from './contexts/UserProfileContext';
 import { CarLockProvider } from './contexts/CarLockContext';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -211,7 +211,8 @@ function App() {
               {appsTopShelf.map((icon, index) => (
                 <div key={index} className="appShelfIcon">
                   <img  
-                    src={getImagePath(`app-${icon}.svg`)}
+                    className={isTeslaIcon(icon) ? 'teslaIcon' : undefined}
+                    src={getAppIconPath(icon)}
                     alt={`${icon} icon`} 
                   />
                   <div className="appShelfIconText">{formatAppName(icon)}</div>
@@ -230,7 +231,8 @@ function App() {
                   }}
                 >
                   <img
-                    src={getImagePath(`app-${icon}.svg`)}
+                    className={isTeslaIcon(icon) ? 'teslaIcon' : undefined}
+                    src={getAppIconPath(icon)}
                     alt={`${icon} icon`}
                   />
                   <div className="appShelfIconText">{formatAppName(icon)}</div>

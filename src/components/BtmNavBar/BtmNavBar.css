@@ -49,6 +49,9 @@
     flex-direction: row;
     justify-self: center;
     align-items: center;
+    /* A definite height here is what lets percentage-sized icons resolve;
+       without it the row takes its height from the tallest image. */
+    height: 100%;
 }
 
 .navIcons {
@@ -97,4 +100,21 @@
     .btmNavBar {
         height: 18%;
     }
+}
+/* The car's own icons are square glyphs with no baked-in padding, unlike the
+   project's wide SVGs. The wrapper is an auto-height inline-block, so a
+   percentage height on the image alone has nothing to resolve against - give
+   the wrapper the bar's height first, scoped to tiles that use Tesla art. */
+.navIconWrapper:has(.teslaIcon) {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.navIcons.teslaIcon {
+    height: 21%;
+    width: auto;
+    max-width: none;
+    padding: 0 18px;
+    object-fit: contain;
 }

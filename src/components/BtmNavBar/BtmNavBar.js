@@ -1,7 +1,7 @@
 import React from 'react';
 import TemperatureControl from '../TemperatureControl/TemperatureControl';
 import VolumeControl from '../VolumeControl/VolumeControl';
-import { getImagePath } from '../../utils/assetPaths';
+import { getImagePath, getAppIconPath, isTeslaIcon } from '../../utils/assetPaths';
 import './BtmNavBar.css';
 
 const BtmNavBar = ({ 
@@ -89,8 +89,8 @@ const BtmNavBar = ({
                                 className={`navIconWrapper ${activeNavIcon === icon ? 'active' : ''} ${isCameraForced ? 'disabled' : ''}`}
                             >
                                 <img 
-                                    className={`navIcons ${icon}`} 
-                                    src={getImagePath(`app-${icon}.svg`)} 
+                                    className={`navIcons ${icon}${isTeslaIcon(icon) ? ' teslaIcon' : ''}`} 
+                                    src={getAppIconPath(icon)} 
                                     alt={`${icon} icon`}
                                     onClick={() => !isCameraForced && handleNavIconClick(icon)}
                                     onMouseDown={!isCameraForced ? handleIconMouseDown : undefined}

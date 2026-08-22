@@ -1,19 +1,154 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useLayoutEffect, useMemo, Suspense } from 'react';
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Stage, useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from 'three';
 import { useSpring, a } from '@react-spring/three';
 import { getCarModelPath } from '../../utils/assetPaths';
-import { VEHICLE } from '../../config/vehicleConfig';
+import {
+  VEHICLES,
+  WHEELS,
+  MODEL_BASE,
+  PARTS,
+  DEFAULT_VEHICLE,
+  DEFAULT_COLOR,
+  colorByKey,
+} from '../../config/vehicleConfig';
 import './VehicleModel.css';
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function Model({ rotateToFrunk, rotateToTrunk, activeGear, ...props }) {
-  const modelPath = getCarModelPath(VEHICLE.file);
-  const { scene } = useGLTF(modelPath);
+const isPaint = (m) => !!m && /^TESLAPAINT_/.test(m.name || '');
+
+/*
+ * Meshes the app never shows in a plain exterior view.
+ *
+ * `_GLOBAL` nodes are the lighting FX duplicates, `Marker` nodes are the
+ * placement anchors, and Defrost/Airflow belong to the climate visualisation.
+ *
+ * The floor group matters most here: the app's shadow is not a shadow map at
+ * all - each car ships a Floor/Ground mesh carrying a baked shadow texture, and
+ * the app's scene has no lights. Rendered under a normal lit setup that plate
+ * shows up as an opaque black quad under the car, which is exactly what it
+ * looked like before this was added.
+ */
+const HIDE_PATTERNS = [/_GLOBAL$/i, /Defrost/i, /Airflow/i, /Marker$/i];
+const FLOOR_PATTERNS = [/Ground/i, /Shadow/i, /^Floor/i];
+
+function hideNonExteriorMeshes(root) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const name = o.name || '';
+    if (HIDE_PATTERNS.some((r) => r.test(name)) || FLOOR_PATTERNS.some((r) => r.test(name))) {
+      o.visible = false;
+    }
+  });
+}
+
+// Equirectangular studio panorama, used as scene.environment.
+const STUDIO_ENV_URL = (process.env.PUBLIC_URL || '') + '/env/studio_ibl.png';
+
+/**
+ * Tint the paint materials.
+ *
+ * The app's paint shader (opaque_skybox.shader) assigns `color` straight to
+ * ALBEDO, so the values in colors.json are already linear - no sRGB decode.
+ * Those albedos are near-black and read almost entirely as tinted reflection,
+ * which comes out muted against a neutral studio environment, so a small chroma
+ * lift restores the punch the app gets from its own coloured surroundings.
+ * Greys are left alone.
+ */
+function applyPaint(root, color) {
+  root.traverse((o) => {
+    if (!o.isMesh) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      if (!isPaint(m)) continue;
+      m.color.setRGB(color.rgb[0], color.rgb[1], color.rgb[2], THREE.LinearSRGBColorSpace);
+      const hsl = m.color.getHSL({});
+      if (hsl.s > 0.06) {
+        m.color.setHSL(
+          hsl.h,
+          Math.min(1, hsl.s * 1.35),
+          Math.min(1, hsl.l * 1.12),
+          THREE.LinearSRGBColorSpace
+        );
+      }
+      m.metalness = color.metallic;
+      // The "Rough" variant is the app's matte/underside pass - keep it dull.
+      m.roughness = /rough/i.test(m.name) ? Math.max(0.6, color.roughness) : color.roughness;
+      m.needsUpdate = true;
+    }
+  });
+}
+
+/**
+ * Hang the wheels off the body.
+ *
+ * Each vehicle carries wheel mount matrices in the manifest. Where the exported
+ * scene still has the matching Wheel_*_Spatial node we parent to that instead,
+ * so anything animating the suspension carries the wheel with it. Names repeat
+ * (the Semi has three Wheel_L_Spatial), so mounts are matched on position.
+ */
+function mountWheels(body, vehicle, wheelProto) {
+  const group = new THREE.Group();
+  group.name = '__simWheels';
+
+  const wanted = new Set((vehicle.mounts || []).map((m) => m.name));
+  const candidates = [];
+  body.traverse((o) => { if (wanted.has(o.name)) candidates.push(o); });
+  body.updateMatrixWorld(true);
+
+  const attached = [];
+
+  for (const mount of vehicle.mounts || []) {
+    const target = new THREE.Vector3(mount.matrix[12], mount.matrix[13], mount.matrix[14]);
+    let node = null;
+    let best = 0.05;
+    for (const c of candidates) {
+      if (c.name !== mount.name || c.userData.__taken) continue;
+      const d = body.worldToLocal(c.getWorldPosition(new THREE.Vector3())).distanceTo(target);
+      if (d < best) { best = d; node = c; }
+    }
+
+    const inst = wheelProto.clone(true);
+    inst.name = '__simWheel';
+
+    if (node) {
+      node.userData.__taken = true;
+      node.add(inst);
+      attached.push(inst);
+    } else {
+      const pivot = new THREE.Object3D();
+      pivot.matrixAutoUpdate = false;
+      pivot.matrix.fromArray(mount.matrix);
+      pivot.add(inst);
+      group.add(pivot);
+    }
+  }
+
+  for (const c of candidates) delete c.userData.__taken;
+  body.add(group);
+
+  return () => {
+    body.remove(group);
+    group.clear();
+    for (const inst of attached) if (inst.parent) inst.parent.remove(inst);
+  };
+}
+
+function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, wheelKey, ...props }) {
+  const vehicle = VEHICLES[vehicleId] || VEHICLES[DEFAULT_VEHICLE];
+  const wheelDef = WHEELS[wheelKey] || WHEELS[vehicle.default_wheel];
+
+  const { scene: loaded } = useGLTF(getCarModelPath(MODEL_BASE + vehicle.file));
+  const { scene: wheelScene } = useGLTF(getCarModelPath(MODEL_BASE + wheelDef.file));
+
+  // A clone per vehicle keeps mutations (paint, mounted wheels) from leaking
+  // back into drei's shared cache when you switch cars.
+  const scene = useMemo(() => loaded.clone(true), [loaded]);
+
   const modelRef = useRef();
   const frunkRef = useRef();
   const trunkRef = useRef();
@@ -28,114 +163,97 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, ...props }) {
   const animationProgressRef = useRef(0);
   const isAnimatingRef = useRef(false);
   const defaultRotation = Math.PI;
-  const [isDriving, setIsDriving] = useState(false);
+
+  useLayoutEffect(() => mountWheels(scene, vehicle, wheelScene), [scene, vehicle, wheelScene]);
+
+  useLayoutEffect(() => {
+    hideNonExteriorMeshes(scene);
+  }, [scene]);
+
+  useLayoutEffect(() => {
+    applyPaint(scene, colorByKey(colorKey));
+  }, [scene, colorKey]);
 
   useEffect(() => {
-    const frunkPart = scene.getObjectByName(VEHICLE.parts.frunk);
-    const trunkPart = scene.getObjectByName(VEHICLE.parts.trunk);
-    if (frunkPart) frunkRef.current = frunkPart;
-    if (trunkPart) trunkRef.current = trunkPart;
+    frunkRef.current = scene.getObjectByName(PARTS.frunk) || null;
+    trunkRef.current = scene.getObjectByName(PARTS.trunk) || null;
 
-    // Find and set up door parts
-    const doorNames = VEHICLE.parts.doors;
-    doorNames.forEach(doorName => {
-      const doorPart = scene.getObjectByName(doorName);
-      if (doorPart) {
-        doorRefs.current[doorName] = doorPart;
-        setDoorStates(prev => ({ ...prev, [doorName]: { isOpen: false, angle: 0 } }));
+    doorRefs.current = {};
+    const next = {};
+    for (const doorName of [...PARTS.doors, ...PARTS.falconDoors]) {
+      const part = scene.getObjectByName(doorName);
+      if (part) {
+        doorRefs.current[doorName] = part;
+        next[doorName] = { isOpen: false, angle: 0 };
       }
-    });
+    }
+    setDoorStates(next);
 
-    // Set up click handlers for doors
     scene.traverse((object) => {
-      if (object.isMesh && doorNames.includes(object.name)) {
-        object.userData.clickable = true;
-      }
+      if (object.isMesh && doorRefs.current[object.name]) object.userData.clickable = true;
     });
   }, [scene]);
 
   useEffect(() => {
+    if (!modelRef.current) return;
     setStartRotation(modelRef.current.rotation.y);
     setFrunkStartAngle(frunkRef.current ? frunkRef.current.rotation.x : 0);
     setTrunkStartAngle(trunkRef.current ? trunkRef.current.rotation.x : 0);
 
     if (activeGear === 'D') {
-      setTargetRotation(Math.PI / 4.3); // 90 degrees clockwise
-      setIsDriving(true);
+      setTargetRotation(Math.PI / 4.3);
     } else if (rotateToFrunk) {
-      setFrunkTargetAngle(Math.PI / 6); // Open the frunk to 30 degrees
-      setTrunkTargetAngle(0); // Close the trunk
-      // No rotation for frunk
+      setFrunkTargetAngle(Math.PI / 6);
+      setTrunkTargetAngle(0);
       setTargetRotation(modelRef.current.rotation.y);
     } else if (rotateToTrunk) {
-      setTargetRotation(defaultRotation - Math.PI / 2); // 90 degrees counterclockwise for trunk
-      setFrunkTargetAngle(0); // Close the frunk
-      setTrunkTargetAngle(-Math.PI / 3.5); // Open the trunk to 45 degrees (negative because it likely opens downwards)
+      setTargetRotation(defaultRotation - Math.PI / 2);
+      setFrunkTargetAngle(0);
+      setTrunkTargetAngle(-Math.PI / 3.5);
     } else {
-      setTargetRotation(defaultRotation); // Reset to default position
-      setFrunkTargetAngle(0); // Close the frunk
-      setTrunkTargetAngle(0); // Close the trunk
-      setIsDriving(false);
+      setTargetRotation(defaultRotation);
+      setFrunkTargetAngle(0);
+      setTrunkTargetAngle(0);
     }
     animationProgressRef.current = 0;
     isAnimatingRef.current = true;
-  }, [rotateToFrunk, rotateToTrunk, activeGear]);
+  }, [rotateToFrunk, rotateToTrunk, activeGear, defaultRotation]);
 
   useFrame((state, delta) => {
-    if (isAnimatingRef.current) {
-      animationProgressRef.current += delta * 0.5; // Adjust this value to control animation speed
-      if (animationProgressRef.current >= 1) {
-        animationProgressRef.current = 1;
-        isAnimatingRef.current = false;
-      }
-
-      const easedProgress = easeInOutCubic(animationProgressRef.current);
-      
-      // Only rotate for trunk or reset
-      if (rotateToTrunk || (!rotateToFrunk && !rotateToTrunk)) {
-        const newRotation = THREE.MathUtils.lerp(startRotation, targetRotation, easedProgress);
-        modelRef.current.rotation.y = newRotation;
-      }
-
-      // Animate the frunk
-      if (frunkRef.current) {
-        const newFrunkAngle = THREE.MathUtils.lerp(frunkStartAngle, frunkTargetAngle, easedProgress);
-        frunkRef.current.rotation.x = newFrunkAngle;
-      }
-
-      // Animate the trunk
-      if (trunkRef.current) {
-        const newTrunkAngle = THREE.MathUtils.lerp(trunkStartAngle, trunkTargetAngle, easedProgress);
-        trunkRef.current.rotation.x = newTrunkAngle;
-      }
-
-      // Animate doors
-      Object.entries(doorStates).forEach(([doorName, doorState]) => {
-        if (doorRefs.current[doorName]) {
-          const targetAngle = doorState.isOpen ? Math.PI / 2 : 0;
-          const newAngle = THREE.MathUtils.lerp(doorState.angle, targetAngle, easedProgress);
-          doorRefs.current[doorName].rotation.y = newAngle;
-          setDoorStates(prev => ({
-            ...prev,
-            [doorName]: { ...prev[doorName], angle: newAngle }
-          }));
-        }
-      });
+    if (!isAnimatingRef.current) return;
+    animationProgressRef.current += delta * 0.5;
+    if (animationProgressRef.current >= 1) {
+      animationProgressRef.current = 1;
+      isAnimatingRef.current = false;
     }
+    const easedProgress = easeInOutCubic(animationProgressRef.current);
+
+    if (modelRef.current && (rotateToTrunk || (!rotateToFrunk && !rotateToTrunk))) {
+      modelRef.current.rotation.y = THREE.MathUtils.lerp(startRotation, targetRotation, easedProgress);
+    }
+    if (frunkRef.current) {
+      frunkRef.current.rotation.x = THREE.MathUtils.lerp(frunkStartAngle, frunkTargetAngle, easedProgress);
+    }
+    if (trunkRef.current) {
+      trunkRef.current.rotation.x = THREE.MathUtils.lerp(trunkStartAngle, trunkTargetAngle, easedProgress);
+    }
+    Object.entries(doorStates).forEach(([doorName, doorState]) => {
+      const part = doorRefs.current[doorName];
+      if (!part) return;
+      const targetAngle = doorState.isOpen ? Math.PI / 2.6 : 0;
+      const newAngle = THREE.MathUtils.lerp(doorState.angle, targetAngle, easedProgress);
+      part.rotation.y = newAngle;
+      setDoorStates((prev) => ({ ...prev, [doorName]: { ...prev[doorName], angle: newAngle } }));
+    });
   });
 
   const handleClick = (event) => {
     event.stopPropagation();
-    const clickedMesh = event.object;
-    if (clickedMesh.userData.clickable) {
-      const doorName = clickedMesh.name;
-      setDoorStates(prev => ({
-        ...prev,
-        [doorName]: { ...prev[doorName], isOpen: !prev[doorName].isOpen }
-      }));
-      animationProgressRef.current = 0;
-      isAnimatingRef.current = true;
-    }
+    const name = event.object.name;
+    if (!doorRefs.current[name]) return;
+    setDoorStates((prev) => ({ ...prev, [name]: { ...prev[name], isOpen: !prev[name].isOpen } }));
+    animationProgressRef.current = 0;
+    isAnimatingRef.current = true;
   };
 
   return (
@@ -145,12 +263,47 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, ...props }) {
   );
 }
 
+/**
+ * Equirectangular studio panorama as scene.environment, via PMREM.
+ *
+ * Deliberately not drei's <Environment>: this never suspends, so a slow or
+ * missing image degrades to flat lighting instead of blanking the whole scene.
+ */
+function SceneProbe() {
+  const state = useThree();
+  useEffect(() => { window.__r3fState = state; }, [state]);
+  return null;
+}
+
+function StudioEnvironment({ url }) {
+  const { scene, gl } = useThree();
+  useEffect(() => {
+    let cancelled = false;
+    const pmrem = new THREE.PMREMGenerator(gl);
+    pmrem.compileEquirectangularShader();
+    new THREE.TextureLoader().load(
+      url,
+      (tex) => {
+        if (cancelled) { tex.dispose(); pmrem.dispose(); return; }
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        scene.environment = pmrem.fromEquirectangular(tex).texture;
+        tex.dispose();
+        pmrem.dispose();
+      },
+      undefined,
+      () => pmrem.dispose()
+    );
+    return () => { cancelled = true; scene.environment = null; };
+  }, [url, scene, gl]);
+  return null;
+}
+
 function ControlledOrbitControls() {
   const { camera, gl } = useThree();
   const controlsRef = useRef();
   const [isInteracting, setIsInteracting] = useState(false);
-  
-  // Adjust the default rotation to be 200 degrees clockwise
+
   const defaultRotation = Math.PI + ((200 * Math.PI) / 170);
 
   const [springProps, setSpring] = useSpring(() => ({
@@ -159,30 +312,26 @@ function ControlledOrbitControls() {
   }));
 
   useEffect(() => {
-    if (controlsRef.current) {
-      controlsRef.current.target.set(0, -0.5, 0);
-      controlsRef.current.update();
+    if (!controlsRef.current) return undefined;
+    controlsRef.current.target.set(0, -0.5, 0);
+    controlsRef.current.update();
 
-      const controls = controlsRef.current;
-      
-      const onStart = () => setIsInteracting(true);
-      const onEnd = () => {
-        setIsInteracting(false);
-        setSpring({ rotation: defaultRotation });
-      };
+    const controls = controlsRef.current;
+    const onStart = () => setIsInteracting(true);
+    const onEnd = () => {
+      setIsInteracting(false);
+      setSpring({ rotation: defaultRotation });
+    };
 
-      controls.addEventListener('start', onStart);
-      controls.addEventListener('end', onEnd);
+    controls.addEventListener('start', onStart);
+    controls.addEventListener('end', onEnd);
+    controls.setAzimuthalAngle(defaultRotation);
+    controls.update();
 
-      // Set initial rotation
-      controls.setAzimuthalAngle(defaultRotation);
-      controls.update();
-
-      return () => {
-        controls.removeEventListener('start', onStart);
-        controls.removeEventListener('end', onEnd);
-      };
-    }
+    return () => {
+      controls.removeEventListener('start', onStart);
+      controls.removeEventListener('end', onEnd);
+    };
   }, [defaultRotation, setSpring]);
 
   useEffect(() => {
@@ -207,10 +356,17 @@ function ControlledOrbitControls() {
   );
 }
 
-export function VehicleModel({ rotateToFrunk, rotateToTrunk, activeGear }) {
+export function VehicleModel({
+  rotateToFrunk,
+  rotateToTrunk,
+  activeGear,
+  vehicleId = DEFAULT_VEHICLE,
+  colorKey = DEFAULT_COLOR,
+  wheelKey,
+}) {
   const distance = 5;
-  const horizontalAngle = Math.PI / 4; // 45 degrees
-  const verticalAngle = activeGear === 'D' ? Math.PI / 3 : Math.PI / 5.14; // Increased angle for 'D' mode
+  const horizontalAngle = Math.PI / 4;
+  const verticalAngle = activeGear === 'D' ? Math.PI / 3 : Math.PI / 5.14;
 
   const cameraPosition = [
     distance * Math.cos(horizontalAngle) * Math.cos(verticalAngle),
@@ -218,23 +374,39 @@ export function VehicleModel({ rotateToFrunk, rotateToTrunk, activeGear }) {
     distance * Math.sin(horizontalAngle) * Math.cos(verticalAngle)
   ];
 
+  const stageKey = vehicleId + ':' + (wheelKey || '');
+
   return (
-    <Canvas 
-      dpr={[1,2]}  
-      camera={{ 
-        fov: 40,
-        position: cameraPosition,
-        near: 0.1,
-        far: 1000
-      }} 
-      style={{"position": "relative"}}
+    <Canvas
+      dpr={[1, 2]}
+      camera={{ fov: 40, position: cameraPosition, near: 0.1, far: 1000 }}
+      style={{ position: 'relative' }}
       className="carModelWrapper"
     >
       <color attach="background" args={["#f1f1f1"]} />
-      <Stage environment={"warehouse"}>
-        <Model scale={0.01} rotateToFrunk={rotateToFrunk} rotateToTrunk={rotateToTrunk} activeGear={activeGear} />
-      </Stage>
+      {/* Lighting is built here rather than with drei's <Environment>: its
+          presets pull an HDRI from a CDN and, when that request hangs, Stage
+          suspends forever and the whole 3D tree - model included - never
+          mounts. This loads the studio panorama the tesla-3d-renders pipeline
+          settled on for matching the app, straight off our own origin. */}
+      <SceneProbe />
+      <StudioEnvironment url={STUDIO_ENV_URL} />
+      <Suspense fallback={null}>
+        {/* shadows off: Stage's accumulative shadow catcher renders as an
+            opaque black plane against this scene's flat background, and the
+            car card on the real display has no cast shadow anyway. */}
+        <Stage environment={null} shadows={false} adjustCamera={1.6} intensity={0.35} key={stageKey}>
+          <Model
+            rotateToFrunk={rotateToFrunk}
+            rotateToTrunk={rotateToTrunk}
+            activeGear={activeGear}
+            vehicleId={vehicleId}
+            colorKey={colorKey}
+            wheelKey={wheelKey}
+          />
+        </Stage>
+      </Suspense>
       <ControlledOrbitControls />
     </Canvas>
-  )
+  );
 }

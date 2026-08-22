@@ -547,3 +547,10 @@ body.recordMode .small-screen-message {
 }
 
 /* -------------------- UTILITY CSS END -------------------- */
+/* Square Tesla glyphs in the app shelf (see BtmNavBar.css for the dock). */
+.appShelfIcon img.teslaIcon {
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  padding: 8%;
+  box-sizing: border-box;
+}

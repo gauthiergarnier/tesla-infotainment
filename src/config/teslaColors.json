@@ -1,0 +1,411 @@
+{
+ "colors": [
+  {
+   "key": "Black",
+   "name": "Black",
+   "rgb": [
+    0.054902,
+    0.054902,
+    0.054902
+   ],
+   "hex": "#0e0e0e",
+   "metallic": 1.0,
+   "roughness": 0.04
+  },
+  {
+   "key": "Blue",
+   "name": "Blue",
+   "rgb": [
+    0.0,
+    0.003922,
+    0.015686
+   ],
+   "hex": "#000104",
+   "metallic": 0.6,
+   "roughness": 0.04
+  },
+  {
+   "key": "Brown",
+   "name": "Brown",
+   "rgb": [
+    0.094118,
+    0.082353,
+    0.078431
+   ],
+   "hex": "#181514",
+   "metallic": 0.8,
+   "roughness": 0.04
+  },
+  {
+   "key": "CoastalBlue",
+   "name": "Coastal Blue",
+   "rgb": [
+    0.015686,
+    0.027451,
+    0.062745
+   ],
+   "hex": "#040710",
+   "metallic": 0.5,
+   "roughness": 0.04
+  },
+  {
+   "key": "DeepBlue",
+   "name": "Deep Blue Metallic",
+   "rgb": [
+    0.0,
+    0.035294,
+    0.098039
+   ],
+   "hex": "#000919",
+   "metallic": 0.7,
+   "roughness": 0.04
+  },
+  {
+   "key": "DiamondBlack",
+   "name": "Diamond Black",
+   "rgb": [
+    0.015686,
+    0.015686,
+    0.015686
+   ],
+   "hex": "#040404",
+   "metallic": 0.75,
+   "roughness": 0.02
+  },
+  {
+   "key": "FrostBlue",
+   "name": "Frost Blue",
+   "rgb": [
+    0.066667,
+    0.07451,
+    0.090196
+   ],
+   "hex": "#111317",
+   "metallic": 0.716,
+   "roughness": 0.05
+  },
+  {
+   "key": "GarnetRed",
+   "name": "Garnet Red",
+   "rgb": [
+    0.113725,
+    0.011765,
+    0.019608
+   ],
+   "hex": "#1d0305",
+   "metallic": 0.8,
+   "roughness": 0.05
+  },
+  {
+   "key": "GlacierBlue",
+   "name": "Glacier Blue",
+   "rgb": [
+    0.070588,
+    0.086275,
+    0.121569
+   ],
+   "hex": "#12161f",
+   "metallic": 0.7,
+   "roughness": 0.1
+  },
+  {
+   "key": "Green",
+   "name": "Green",
+   "rgb": [
+    0.023529,
+    0.039216,
+    0.039216
+   ],
+   "hex": "#060a0a",
+   "metallic": 0.8,
+   "roughness": 0.04
+  },
+  {
+   "key": "Grey",
+   "name": "Grey",
+   "rgb": [
+    0.07451,
+    0.078431,
+    0.086275
+   ],
+   "hex": "#131416",
+   "metallic": 0.8,
+   "roughness": 0.04
+  },
+  {
+   "key": "LunarSilver",
+   "name": "Lunar Silver",
+   "rgb": [
+    0.203922,
+    0.203922,
+    0.219608
+   ],
+   "hex": "#343438",
+   "metallic": 0.898,
+   "roughness": 0.28
+  },
+  {
+   "key": "MarineBlue",
+   "name": "Marine Blue",
+   "rgb": [
+    0.003922,
+    0.019608,
+    0.039216
+   ],
+   "hex": "#01050a",
+   "metallic": 0.85,
+   "roughness": 0.02
+  },
+  {
+   "key": "MetallicBlack",
+   "name": "Obsidian Black Metallic",
+   "rgb": [
+    0.054902,
+    0.054902,
+    0.054902
+   ],
+   "hex": "#0e0e0e",
+   "metallic": 1.0,
+   "roughness": 0.04
+  },
+  {
+   "key": "MidnightCherryRed",
+   "name": "Midnight Cherry Red",
+   "rgb": [
+    0.12549,
+    0.0,
+    0.023529
+   ],
+   "hex": "#200006",
+   "metallic": 0.8,
+   "roughness": 0.01
+  },
+  {
+   "key": "MidnightSilver",
+   "name": "Midnight Silver Metallic",
+   "rgb": [
+    0.07451,
+    0.078431,
+    0.086275
+   ],
+   "hex": "#131416",
+   "metallic": 0.8,
+   "roughness": 0.04
+  },
+  {
+   "key": "Pearl",
+   "name": "Pearl White",
+   "rgb": [
+    0.07451,
+    0.07451,
+    0.07451
+   ],
+   "hex": "#131313",
+   "metallic": 0.01,
+   "roughness": 0.04
+  },
+  {
+   "key": "PearlWhite",
+   "name": "Pearl White Multi-Coat",
+   "rgb": [
+    0.094118,
+    0.094118,
+    0.094118
+   ],
+   "hex": "#181818",
+   "metallic": 0.25,
+   "roughness": 0.2
+  },
+  {
+   "key": "Quicksilver",
+   "name": "Quicksilver",
+   "rgb": [
+    0.168627,
+    0.176471,
+    0.207843
+   ],
+   "hex": "#2b2d35",
+   "metallic": 0.85,
+   "roughness": 0.2
+  },
+  {
+   "key": "Red",
+   "name": "Red",
+   "rgb": [
+    0.039216,
+    0.003922,
+    0.003922
+   ],
+   "hex": "#0a0101",
+   "metallic": 0.1,
+   "roughness": 0.04
+  },
+  {
+   "key": "RedMulticoat",
+   "name": "Red Multi-Coat",
+   "rgb": [
+    0.039216,
+    0.003922,
+    0.003922
+   ],
+   "hex": "#0a0101",
+   "metallic": 0.1,
+   "roughness": 0.04
+  },
+  {
+   "key": "SigRed",
+   "name": "Signature Red",
+   "rgb": [
+    0.066667,
+    0.011765,
+    0.019608
+   ],
+   "hex": "#110305",
+   "metallic": 0.7,
+   "roughness": 0.04
+  },
+  {
+   "key": "SignatureBlue",
+   "name": "Signature Blue",
+   "rgb": [
+    0.0,
+    0.007843,
+    0.023529
+   ],
+   "hex": "#000206",
+   "metallic": 0.2,
+   "roughness": 0.04
+  },
+  {
+   "key": "SilkroadSilver",
+   "name": "Silkroad Silver",
+   "rgb": [
+    0.176471,
+    0.172549,
+    0.176471
+   ],
+   "hex": "#2d2c2d",
+   "metallic": 0.826,
+   "roughness": 0.204
+  },
+  {
+   "key": "Silver",
+   "name": "Silver",
+   "rgb": [
+    0.086275,
+    0.086275,
+    0.086275
+   ],
+   "hex": "#161616",
+   "metallic": 0.6,
+   "roughness": 0.04
+  },
+  {
+   "key": "SilverMetallic",
+   "name": "Silver Metallic",
+   "rgb": [
+    0.086275,
+    0.086275,
+    0.086275
+   ],
+   "hex": "#161616",
+   "metallic": 0.6,
+   "roughness": 0.04
+  },
+  {
+   "key": "SolidBlack",
+   "name": "Solid Black",
+   "rgb": [
+    0.054902,
+    0.054902,
+    0.054902
+   ],
+   "hex": "#0e0e0e",
+   "metallic": 1.0,
+   "roughness": 0.04
+  },
+  {
+   "key": "StealthGrey",
+   "name": "Stealth Grey",
+   "rgb": [
+    0.070588,
+    0.078431,
+    0.090196
+   ],
+   "hex": "#121417",
+   "metallic": 0.88,
+   "roughness": 0.1
+  },
+  {
+   "key": "SteelGrey",
+   "name": "Steel Grey",
+   "rgb": [
+    0.07451,
+    0.078431,
+    0.086275
+   ],
+   "hex": "#131416",
+   "metallic": 0.8,
+   "roughness": 0.04
+  },
+  {
+   "key": "Titanium",
+   "name": "Titanium",
+   "rgb": [
+    0.094118,
+    0.082353,
+    0.062745
+   ],
+   "hex": "#181510",
+   "metallic": 0.8,
+   "roughness": 0.04
+  },
+  {
+   "key": "TitaniumCopper",
+   "name": "Titanium Metallic",
+   "rgb": [
+    0.094118,
+    0.082353,
+    0.062745
+   ],
+   "hex": "#181510",
+   "metallic": 0.8,
+   "roughness": 0.04
+  },
+  {
+   "key": "UltraRed",
+   "name": "Ultra Red",
+   "rgb": [
+    0.145098,
+    0.0,
+    0.023529
+   ],
+   "hex": "#250006",
+   "metallic": 0.7,
+   "roughness": 0.05
+  },
+  {
+   "key": "White",
+   "name": "White",
+   "rgb": [
+    0.078431,
+    0.078431,
+    0.078431
+   ],
+   "hex": "#141414",
+   "metallic": 0.2,
+   "roughness": 0.3
+  }
+ ],
+ "fallback": {
+  "rgb": [
+   0.086275,
+   0.086275,
+   0.086275
+  ],
+  "metallic": 0.6,
+  "roughness": 0.04
+ },
+ "base_metallic": 0.3,
+ "base_roughness": 0.04
+}

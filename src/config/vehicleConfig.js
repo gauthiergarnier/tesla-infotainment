@@ -1,57 +1,83 @@
 /**
- * Which 3D car to draw in the left card, and what its moving parts are called.
+ * The car fleet, straight out of Tesla's own asset pack.
  *
- * The upstream default is a generic 2018 Model 3 from a model marketplace:
- * 22 MB, and its node names are the exporter's (`bonnet_dummy`, `door_lf_dummy`).
+ * The Tesla Android app embeds a real Godot runtime (`libgodot_android.so`) and
+ * ships the same `Ego/*` scenes the car's own screen renders — the manifest
+ * entries still carry their `res://Ego/3_High/Model3_High.tscn` source paths.
+ * They were exported to glTF and meshopt/WebP-compressed by the
+ * tesla-3d-renders pipeline, which is why 12 vehicles plus 54 wheel designs fit
+ * in roughly the space the single marketplace model used to take.
  *
- * The 'firmware' preset points at the model the car actually draws on its own
- * screen, pulled out of the MCU image by the tesla-3d-renders pipeline
- * (`Ego/3_High/Model3_High` in the shipped Godot pack). It is ~3 MB — an order
- * of magnitude smaller, because it is built for an in-car GPU — and it is the
- * genuine article rather than a lookalike, with Tesla's own node naming.
+ * `manifest.json` carries, per vehicle: wheel mount matrices, the wheel designs
+ * that fit it, markers (seats, steering wheel, front/rear extents), interior
+ * material slots, and the names of the paint materials to tint.
  *
- * Select with REACT_APP_CAR_MODEL=firmware, after running:
- *
- *     npm run import:firmware-model -- /path/to/tesla-3d-renders-fw
- *
- * NOTE: the firmware model is Tesla's asset. The import script deliberately
- * writes into public/car-models/, which is gitignored for that file, so you do
- * not accidentally redistribute it from a public fork. Decide for yourself
- * whether to publish it.
- *
- * NOTE: the two models do not share an origin, scale or resting orientation.
- * The firmware preset carries its own transform below; expect to nudge it.
+ * Pick with `?vehicle=modely_juniper`, or from the picker in the car card.
  */
 
-const PRESETS = {
-  marketplace: {
-    file: 'tesla-model-3-2018.glb',
-    parts: {
-      frunk: 'bonnet_dummy',
-      trunk: 'boot_dummy',
-      doors: ['door_lf_dummy', 'door_lr_dummy', 'door_rf_dummy', 'door_rr_dummy'],
-    },
-    scale: 1,
-    position: [0, 0, 0],
-  },
+import manifest from './teslaManifest.json';
+import colorData from './teslaColors.json';
 
-  firmware: {
-    file: 'Ego__3_High__Model3_High.glb',
-    parts: {
-      // Tesla's names, read straight out of the exported glTF node list.
-      frunk: 'Hood',
-      trunk: 'Trunk',
-      doors: ['Door_LF', 'Door_LR', 'Door_RF', 'Door_RR'],
-    },
-    // Firmware models are authored in metres with the car's origin at the rear
-    // axle; these are a starting point, not a calibrated answer.
-    scale: 1,
-    position: [0, 0, 0],
-  },
+export const MANIFEST = manifest;
+export const VEHICLES = manifest.vehicles;
+export const WHEELS = manifest.wheels;
+export const COLORS = colorData.colors;
+export const COLOR_FALLBACK = colorData.fallback;
+
+/** Display names, in the order the app lists them. */
+export const VEHICLE_LABELS = {
+  model3: 'Model 3',
+  model3_highland: 'Model 3 (Highland)',
+  modely: 'Model Y',
+  modely_juniper: 'Model Y (Juniper)',
+  modely_e41: 'Model Y (E41)',
+  modely_e80: 'Model Y (E80)',
+  models: 'Model S',
+  models_palladium: 'Model S (Palladium)',
+  modelx: 'Model X',
+  modelx_palladium: 'Model X (Palladium)',
+  cybertruck: 'Cybertruck',
+  semi: 'Semi',
 };
 
-const selected = process.env.REACT_APP_CAR_MODEL === 'firmware' ? 'firmware' : 'marketplace';
+export const VEHICLE_IDS = Object.keys(VEHICLE_LABELS).filter((id) => VEHICLES[id]);
 
-export const VEHICLE = PRESETS[selected];
-export const VEHICLE_PRESET = selected;
-export default VEHICLE;
+/** Where the .glb files live under public/. */
+export const MODEL_BASE = 'tesla/';
+
+const params = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+
+function pick(key, allowed, fallback) {
+  const v = params.get(key);
+  return v && allowed.includes(v) ? v : fallback;
+}
+
+export const DEFAULT_VEHICLE = pick('vehicle', VEHICLE_IDS, 'model3_highland');
+export const DEFAULT_COLOR = pick('color', COLORS.map((c) => c.key), 'PearlWhite');
+
+/** Wheel designs that actually fit a given vehicle, sorted for display. */
+export function wheelsFor(vehicleId) {
+  const v = VEHICLES[vehicleId];
+  if (!v) return [];
+  const tol = 0.2;
+  return (v.wheels || [])
+    .map((k) => ({ key: k, ...WHEELS[k] }))
+    .filter((w) => w.file && Math.abs(w.radius - v.wheel_radius) / v.wheel_radius < tol)
+    .sort((a, b) => (a.label || a.key).localeCompare(b.label || b.key));
+}
+
+export function colorByKey(key) {
+  return COLORS.find((c) => c.key === key) || COLORS.find((c) => c.key === COLOR_FALLBACK) || COLORS[0];
+}
+
+/**
+ * Tesla node names for the parts the UI animates. These hold across the whole
+ * Ego family, which is why the fleet can share one component.
+ */
+export const PARTS = {
+  frunk: 'Hood',
+  trunk: 'Trunk',
+  doors: ['Door_LF', 'Door_LR', 'Door_RF', 'Door_RR'],
+  // The falcon doors on the X are a different node again.
+  falconDoors: ['Door_LR_Falcon', 'Door_RR_Falcon'],
+};

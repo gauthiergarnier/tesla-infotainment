@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { getImagePath } from '../../utils/assetPaths';
+import { TESLA_MAP_STYLES } from '../../config/mapStyles';
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete, DirectionsRenderer } from '@react-google-maps/api';
 import CarLock from '../CarLock/CarLock';
 import Clock from '../Clock/Clock';
@@ -15,7 +16,9 @@ const containerStyle = {
 };
 
 const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
-const MAP_ID = '2d1b7cd2cf277f7';
+// Empty by default. The Maps JS API ignores `styles` whenever a mapId is set,
+// and the car's own style JSON is a closer match than any cloud style.
+const MAP_ID = process.env.REACT_APP_GOOGLE_MAPS_MAP_ID || undefined;
 
 const libraries = ['places'];
 
@@ -34,6 +37,30 @@ export function MapNavigation({ onWifiClick }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const inputRef = useRef(null);  // New ref for the input element
   const [inputValue, setInputValue] = useState('');  // New state for input value
+
+  /* Which of the car's map styles to use. The car keeps two pairs: a normal
+     style and a "quiet label" variant it switches to while navigating, so
+     labels stop competing with the route. Day/night follows the clock unless
+     ?theme=day|night pins it, which keeps recorded takes deterministic. */
+  const isNight = useMemo(() => {
+    const forced = new URLSearchParams(window.location.search).get('theme');
+    if (forced === 'night') return true;
+    if (forced === 'day') return false;
+    const h = new Date().getHours();
+    return h < 7 || h >= 19;
+  }, []);
+
+  const mapStyle = useMemo(() => {
+    if (mapType === 'satellite') {
+      return isNavigating
+        ? TESLA_MAP_STYLES.satelliteQuietLabelStyle
+        : TESLA_MAP_STYLES.satelliteLabelStyle;
+    }
+    if (isNight) {
+      return isNavigating ? TESLA_MAP_STYLES.nightQuietLabelStyle : TESLA_MAP_STYLES.nightStyle;
+    }
+    return isNavigating ? TESLA_MAP_STYLES.dayQuietLabelStyle : TESLA_MAP_STYLES.dayStyle;
+  }, [mapType, isNavigating, isNight]);
 
   // Memoize the loader options so it doesn't re-create on every render
   const loaderOptions = useMemo(() => ({
@@ -315,7 +342,7 @@ export function MapNavigation({ onWifiClick }) {
             onLoad={onLoad}
             onUnmount={onUnmount}
             options={{
-              mapId: MAP_ID,
+              ...(MAP_ID ? { mapId: MAP_ID } : { styles: mapStyle }),
               mapTypeId: mapType,
               disableDefaultUI: true,
               gestureHandling: 'greedy',
