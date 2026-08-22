@@ -306,6 +306,17 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
  * Deliberately not drei's <Environment>: this never suspends, so a slow or
  * missing image degrades to flat lighting instead of blanking the whole scene.
  */
+class SceneErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { err: null }; }
+  static getDerivedStateFromError(err) { return { err }; }
+  componentDidCatch(err, info) {
+    // react-three-fiber swallows errors thrown inside <Canvas>: the canvas
+    // element mounts, the children never do, and nothing reaches the console.
+    console.error('[car-card] scene failed:', err && err.message, err && err.stack, info && info.componentStack);
+  }
+  render() { return this.state.err ? null : this.props.children; }
+}
+
 function SceneProbe() {
   const state = useThree();
   useEffect(() => { window.__r3fState = state; }, [state]);
@@ -417,10 +428,18 @@ export function VehicleModel({
     <Canvas
       dpr={[1, 2]}
       camera={{ fov: 40, position: cameraPosition, near: 0.1, far: 1000 }}
-      style={{ position: 'relative' }}
+      style={{ position: 'relative', width: '100%', height: '100%' }}
       className="carModelWrapper"
+      /* react-three-fiber only renders its children once react-use-measure has
+         reported a non-zero size. This container is laid out by flexbox and does
+         not change size again after mount, so with the default debounce the
+         resize observation can land after the measurement pass and never fire
+         again - the canvas element mounts, the scene never does, and nothing is
+         logged. Measuring undebounced makes it deterministic. */
+      resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
     >
       <color attach="background" args={["#f1f1f1"]} />
+      <SceneErrorBoundary>
       {/* Lighting is built here rather than with drei's <Environment>: its
           presets pull an HDRI from a CDN and, when that request hangs, Stage
           suspends forever and the whole 3D tree - model included - never
@@ -447,6 +466,7 @@ export function VehicleModel({
           />
         </group>
       </Suspense>
+      </SceneErrorBoundary>
       <ControlledOrbitControls />
     </Canvas>
   );
