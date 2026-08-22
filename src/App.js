@@ -4,6 +4,7 @@ import { VehicleModel } from './components/VehicleModel/VehicleModel';
 import { getImagePath, getAppIconPath, isTeslaIcon } from './utils/assetPaths';
 import { UserProfileProvider } from './contexts/UserProfileContext';
 import { CarLockProvider } from './contexts/CarLockContext';
+import { SceneProvider } from './contexts/SceneContext';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { MapNavigation } from './components/MapNavigation/MapNavigation';
 import { MusicPanel } from './components/MusicPanel/MusicPanel';
@@ -404,6 +405,7 @@ function App() {
 
   return (
     <CarLockProvider>
+      <SceneProvider>
       <UserProfileProvider>
         {isLoading && <LoadingScreen />}
         <div id="displayBezel" ref={appContentRef} style={{display: isLoading ? 'none' : 'block'}}>
@@ -508,6 +510,7 @@ function App() {
           At least until I tweak the mobile styles.</span>
         </div>
       </UserProfileProvider>
+      </SceneProvider>
     </CarLockProvider>
   );
 }

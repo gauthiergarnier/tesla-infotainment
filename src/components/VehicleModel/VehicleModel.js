@@ -4,6 +4,14 @@ import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from 'three';
 import { useSpring, a } from '@react-spring/three';
 import { getCarModelPath } from '../../utils/assetPaths';
+import { useScene } from '../../contexts/SceneContext';
+import {
+  LIGHT_COLORS,
+  classifyLight,
+  ENVIRONMENTS,
+  REFLECTION_URL,
+  CUBE_FACES,
+} from '../../config/sceneOptions';
 import {
   VEHICLES,
   WHEELS,
@@ -38,12 +46,94 @@ const HIDE_PATTERNS = [
   /Defrost/i,
   /Airflow/i,
   /Marker$/i,
-  // Light FX. TESLAFX_Headlights_Projections is an 11 m x 7.8 m flat quad - the
-  // beam cast on the road - so leaving it visible does not just add glow, it
-  // triples the model's bounding box and throws off any camera fit.
-  /^TESLAFX_/i,
 ];
 const FLOOR_PATTERNS = [/Ground/i, /Shadow/i, /^Floor/i];
+
+/**
+ * Prepare the car's switchable light states.
+ *
+ * TESLAFX_ nodes are the app's own light meshes. They start off, and each one
+ * gets its own copy of the material because the originals are shared across
+ * every lamp on the car - without the clone, switching the headlights would
+ * light the brakes too.
+ *
+ * The projected pools on the road ("beams") are emitted light: additive, no
+ * depth write, tinted to their lamp, so the rear pool reads red and the front
+ * one white. Lamps themselves glow via emissive.
+ */
+function tagLightMeshes(root) {
+  const fx = [];
+  root.traverse((node) => {
+    if (!/^TESLAFX_/i.test(node.name || '')) return;
+    const info = classifyLight(node.name);
+    node.traverse((o) => {
+      if (!o.isMesh) return;
+      const col = new THREE.Color(LIGHT_COLORS[info.sub || info.group] || 0xffffff);
+      o.userData.fxGroup = info.group;
+      o.userData.fxSide = info.side || null;
+      o.userData.fxBeam = !!info.beam;
+      o.userData.isFx = true;
+      o.visible = false;
+      o.castShadow = false;
+      o.receiveShadow = false;
+
+      const mats = Array.isArray(o.material) ? o.material : [o.material];
+      const own = mats.map((m) => {
+        if (!m) return m;
+        const c = m.clone();
+        c.name = m.name;
+        if (info.beam || m.isMeshBasicMaterial) {
+          c.transparent = true;
+          c.blending = THREE.AdditiveBlending;
+          c.depthWrite = false;
+          c.side = THREE.DoubleSide;
+          c.opacity = info.beam ? 0.5 : 0.9;
+          if (c.color) c.color.copy(col);
+        } else {
+          c.emissive = col.clone();
+          c.emissiveMap = c.map || null;
+          c.emissiveIntensity = 0;
+        }
+        return c;
+      });
+      o.material = Array.isArray(o.material) ? own : own[0];
+      if (info.beam) {
+        // The pools sit on y=0 and would z-fight the ground.
+        o.position.y += 0.012;
+        o.renderOrder = 3;
+      }
+      fx.push(o);
+    });
+  });
+  root.userData.fx = fx;
+  return fx;
+}
+
+/** Switch the tagged light meshes to match the current state. */
+function applyLights(root, lights, blinkPhase) {
+  for (const o of root.userData.fx || []) {
+    const on = lightMeshOn(o, lights, blinkPhase);
+    o.visible = on;
+    for (const m of (Array.isArray(o.material) ? o.material : [o.material])) {
+      // Bright enough that the lamp reads as glowing rather than just tinted.
+      if (m && !o.userData.fxBeam && 'emissiveIntensity' in m) {
+        m.emissiveIntensity = on ? 2.4 : 0;
+      }
+    }
+  }
+}
+
+/** Whether one light mesh should be lit, given the switch state and blink phase. */
+function lightMeshOn(o, lights, blinkPhase) {
+  const g = o.userData.fxGroup;
+  if (g === 'turn') {
+    if (!blinkPhase) return false;
+    if (lights.hazard) return true;
+    return (o.userData.fxSide === 'L' && lights.turnL)
+      || (o.userData.fxSide === 'R' && lights.turnR);
+  }
+  return !!lights[g];
+}
 
 function hideNonExteriorMeshes(root) {
   root.traverse((o) => {
@@ -67,7 +157,6 @@ function hideNonExteriorMeshes(root) {
 }
 
 // Equirectangular studio panorama, used as scene.environment.
-const STUDIO_ENV_URL = (process.env.PUBLIC_URL || '') + '/env/studio_ibl.png';
 
 // The car card has no panel of its own on the real display - it sits straight
 // on the screen background, so the clear colour has to follow the theme.
@@ -163,7 +252,7 @@ function mountWheels(body, vehicle, wheelProto) {
   };
 }
 
-function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, wheelKey, ...props }) {
+function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, wheelKey, lights, ...props }) {
   const vehicle = VEHICLES[vehicleId] || VEHICLES[DEFAULT_VEHICLE];
   const wheelDef = WHEELS[wheelKey] || WHEELS[vehicle.default_wheel];
 
@@ -187,16 +276,28 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
   const [doorStates, setDoorStates] = useState({});
   const animationProgressRef = useRef(0);
   const isAnimatingRef = useRef(false);
-  /* Tesla's Ego models face -Z - FrontMarker sits at z = -2.35 - and the camera
-     looks in from +X/+Y/+Z. Rotating the model by pi therefore showed us the
-     tail; the car card on the real display is a front three-quarter view. */
-  const defaultRotation = 0;
+  const blinkRef = useRef(0);
+  const lastPhaseRef = useRef(null);
+  const lightsRef = useRef(null);
+  /* Tesla's Ego models face -Z (FrontMarker sits at z = -2.35) and OrbitControls
+     pins the camera to an azimuth of ~32 degrees, essentially on +Z - so the
+     model needs a half turn to present its nose, which is the front
+     three-quarter view the car card uses. */
+  const defaultRotation = Math.PI;
 
   useLayoutEffect(() => mountWheels(scene, vehicle, wheelScene), [scene, vehicle, wheelScene]);
 
   useLayoutEffect(() => {
     hideNonExteriorMeshes(scene);
+    tagLightMeshes(scene);
   }, [scene]);
+
+  /* Steady lamps switch here rather than in useFrame: a throttled or paused
+     frame loop should not be able to leave the headlights stuck off. */
+  useEffect(() => {
+    applyLights(scene, lights, true);
+    lastPhaseRef.current = true;
+  }, [scene, lights]);
 
   useLayoutEffect(() => {
     applyPaint(scene, colorByKey(colorKey));
@@ -211,11 +312,16 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
     scene.updateMatrixWorld(true);
     const box = new THREE.Box3();
     scene.traverse((o) => {
-      if (o.isMesh && o.visible && o.geometry) box.expandByObject(o);
+      if (o.isMesh && o.visible && o.geometry && !o.userData.isFx) box.expandByObject(o);
     });
     if (!box.isEmpty()) {
       const centre = box.getCenter(new THREE.Vector3());
       scene.position.set(-centre.x, -box.min.y, -centre.z);
+    }
+    // Seat the resting orientation here too: the effect that animates it bails
+    // while the ref is still null, which is exactly the case on first mount.
+    if (modelRef.current && !isAnimatingRef.current) {
+      modelRef.current.rotation.y = defaultRotation;
     }
   }, [scene, vehicle, wheelScene, colorKey]);
 
@@ -262,9 +368,20 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
     }
     animationProgressRef.current = 0;
     isAnimatingRef.current = true;
-  }, [rotateToFrunk, rotateToTrunk, activeGear, defaultRotation]);
+  }, [scene, rotateToFrunk, rotateToTrunk, activeGear, defaultRotation]);
 
   useFrame((state, delta) => {
+    // Only the indicators need the frame loop; the steady lamps are applied in
+    // an effect so they do not depend on it.
+    if (lights.turnL || lights.turnR || lights.hazard) {
+      blinkRef.current += delta;
+      const phase = Math.floor(blinkRef.current / 0.45) % 2 === 0;
+      if (phase !== lastPhaseRef.current) {
+        lastPhaseRef.current = phase;
+        applyLights(scene, lights, phase);
+      }
+    }
+
     if (!isAnimatingRef.current) return;
     animationProgressRef.current += delta * 0.5;
     if (animationProgressRef.current >= 1) {
@@ -308,37 +425,45 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
   );
 }
 
-/**
- * Equirectangular studio panorama as scene.environment, via PMREM.
- *
- * Deliberately not drei's <Environment>: this never suspends, so a slow or
- * missing image degrades to flat lighting instead of blanking the whole scene.
- */
 class SceneErrorBoundary extends React.Component {
   constructor(props) { super(props); this.state = { err: null }; }
   static getDerivedStateFromError(err) { return { err }; }
   componentDidCatch(err, info) {
     // react-three-fiber swallows errors thrown inside <Canvas>: the canvas
     // element mounts, the children never do, and nothing reaches the console.
-    console.error('[car-card] scene failed:', err && err.message, err && err.stack, info && info.componentStack);
+    console.error('[car-card] scene failed:', err && err.message, info && info.componentStack);
   }
   render() { return this.state.err ? null : this.props.children; }
 }
 
+/** Exposes the r3f state on window, for diagnosing from the console. */
 function SceneProbe() {
   const state = useThree();
   useEffect(() => { window.__r3fState = state; }, [state]);
   return null;
 }
 
-function StudioEnvironment({ url }) {
+/**
+ * Reflections, backdrop and exposure.
+ *
+ * scene.environment is always the studio panorama, whichever backdrop is
+ * selected - the viewer settled on that because the app's paint is almost
+ * entirely tinted reflection, and borrowing the studio's reflections is what
+ * keeps every environment looking like the app. Only scene.background changes.
+ *
+ * Deliberately not drei's <Environment>: this never suspends, so a slow or
+ * missing image degrades to flat lighting instead of blanking the whole scene.
+ */
+function SceneRig({ environment, exposure }) {
   const { scene, gl } = useThree();
+
+  // Reflections: loaded once, shared by every backdrop.
   useEffect(() => {
     let cancelled = false;
     const pmrem = new THREE.PMREMGenerator(gl);
     pmrem.compileEquirectangularShader();
     new THREE.TextureLoader().load(
-      url,
+      REFLECTION_URL,
       (tex) => {
         if (cancelled) { tex.dispose(); pmrem.dispose(); return; }
         tex.mapping = THREE.EquirectangularReflectionMapping;
@@ -351,7 +476,45 @@ function StudioEnvironment({ url }) {
       () => pmrem.dispose()
     );
     return () => { cancelled = true; scene.environment = null; };
-  }, [url, scene, gl]);
+  }, [scene, gl]);
+
+  // Backdrop.
+  useEffect(() => {
+    const env = ENVIRONMENTS.find((e) => e.key === environment) || ENVIRONMENTS[0];
+    let cancelled = false;
+    let created = null;
+
+    if (env.kind === 'solid') {
+      scene.background = new THREE.Color(env.color);
+    } else if (env.kind === 'cube') {
+      new THREE.CubeTextureLoader().load(
+        CUBE_FACES.map((f) => env.dir + f + '.png'),
+        (cube) => {
+          if (cancelled) { cube.dispose(); return; }
+          cube.colorSpace = THREE.SRGBColorSpace;
+          scene.background = cube;
+          created = cube;
+        }
+      );
+    } else {
+      new THREE.TextureLoader().load(env.url, (tex) => {
+        if (cancelled) { tex.dispose(); return; }
+        tex.mapping = THREE.EquirectangularReflectionMapping;
+        tex.colorSpace = THREE.SRGBColorSpace;
+        scene.background = tex;
+        created = tex;
+      });
+    }
+
+    return () => { cancelled = true; if (created) created.dispose(); };
+  }, [scene, environment]);
+
+  // Exposure.
+  useEffect(() => {
+    gl.toneMapping = THREE.ACESFilmicToneMapping;
+    gl.toneMappingExposure = exposure;
+  }, [gl, exposure]);
+
   return null;
 }
 
@@ -420,6 +583,7 @@ export function VehicleModel({
   colorKey = DEFAULT_COLOR,
   wheelKey,
 }) {
+  const { lights, environment, ambient, exposure } = useScene();
   /* A 4.7 m car viewed at 45 degrees projects about 4.8 m across. At the old
      5 m the frame cut the bumpers off; 7 m leaves it room to breathe. */
   const distance = 6.2;
@@ -448,6 +612,8 @@ export function VehicleModel({
          logged. Measuring undebounced makes it deterministic. */
       resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
     >
+      {/* SceneRig owns scene.background; this is only the clear colour before
+          the backdrop texture arrives. */}
       <color attach="background" args={[isDarkTheme() ? "#000000" : "#f1f1f1"]} />
       <SceneErrorBoundary>
       {/* Lighting is built here rather than with drei's <Environment>: its
@@ -455,10 +621,10 @@ export function VehicleModel({
           suspends forever and the whole 3D tree - model included - never
           mounts. This loads the studio panorama the tesla-3d-renders pipeline
           settled on for matching the app, straight off our own origin. */}
-      <ambientLight intensity={0.35} />
+      <ambientLight intensity={ambient / 10} />
       <directionalLight position={[3, 5, 4]} intensity={0.9} />
       <SceneProbe />
-      <StudioEnvironment url={STUDIO_ENV_URL} />
+      <SceneRig environment={environment} exposure={exposure} />
       <Suspense fallback={null}>
         {/* Deliberately NOT drei's <Stage>. Stage normalises whatever it is
             given to a unit box, which blew a 4.7 m Model 3 up to 14.7 m and put
@@ -473,6 +639,7 @@ export function VehicleModel({
             vehicleId={vehicleId}
             colorKey={colorKey}
             wheelKey={wheelKey}
+            lights={lights}
           />
         </group>
       </Suspense>

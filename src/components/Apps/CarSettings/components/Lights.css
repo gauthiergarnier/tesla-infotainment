@@ -1,0 +1,110 @@
+.lightsPane {
+  padding: 1.2em 1.6em;
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
+  color: #1c1c1e;
+}
+
+.lsSection { margin-bottom: 1.8em; }
+
+.lsHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1em;
+}
+
+.lsLabel {
+  font-size: 0.78em;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  opacity: 0.55;
+  display: block;
+  margin-bottom: 0.7em;
+}
+
+.lsReset {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85em;
+  color: #2f6fed;
+  cursor: pointer;
+}
+
+.lsChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+.lsChip {
+  border: 1px solid rgba(28, 28, 30, 0.18);
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 999px;
+  padding: 0.5em 1.1em;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.lsChip:hover { background: rgba(255, 255, 255, 0.9); }
+
+.lsChip.on {
+  border-color: #e5484d;
+  color: #e5484d;
+  font-weight: 600;
+}
+
+.lsGlyph { font-size: 0.8em; opacity: 0.8; }
+
+.lsDescription {
+  margin: 0.8em 0 0;
+  font-size: 0.85em;
+  line-height: 1.5;
+  opacity: 0.55;
+  max-width: 44em;
+}
+
+.lsSlider {
+  display: grid;
+  grid-template-columns: 9em 1fr 3em;
+  align-items: center;
+  gap: 1em;
+  margin-bottom: 0.9em;
+}
+
+.lsSlider input[type='range'] { width: 100%; accent-color: #2f6fed; }
+
+.lsSliderValue {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  opacity: 0.6;
+  font-size: 0.9em;
+}
+
+/* ------------------------------------------------------------- dark theme */
+
+body.theme-dark .lightsPane { color: #f2f2f4; }
+
+body.theme-dark .lsChip {
+  border-color: rgba(242, 242, 244, 0.2);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.theme-dark .lsChip:hover { background: rgba(255, 255, 255, 0.12); }
+
+body.theme-dark .lsChip.on {
+  border-color: #ff6b6f;
+  color: #ff6b6f;
+  background: rgba(255, 107, 111, 0.12);
+}
+
+body.theme-dark .lsReset { color: #5b9cff; }
+body.theme-dark .lsSlider input[type='range'] { accent-color: #5b9cff; }
