@@ -10,6 +10,7 @@ import { MusicPanel } from './components/MusicPanel/MusicPanel';
 import { Modal } from './components/Modal/Modal';
 import VerticalSliderPanel from './components/VerticalSliderPanel/VerticalSliderPanel';
 import BtmNavBar from './components/BtmNavBar/BtmNavBar';
+import { Browser } from './components/Apps/Browser/Browser';
 import CarLock from './components/CarLock/CarLock';
 import VolumeControl from './components/VolumeControl/VolumeControl';
 import TemperatureControl from './components/TemperatureControl/TemperatureControl';
@@ -25,6 +26,23 @@ const formatAppName = (appName) => {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 };
+
+/**
+ * Deep links, so a recording take is repeatable:
+ *   ?app=browser&url=https://codriver.io&expanded=1&record=1
+ * `record=1` strips the page furniture and the desk bezel so a screen capture
+ * of the window is nothing but the centre display.
+ */
+const launchParams = (() => {
+  if (typeof window === 'undefined') return {};
+  const q = new URLSearchParams(window.location.search);
+  return {
+    app: q.get('app'),
+    url: q.get('url'),
+    expanded: q.get('expanded') === '1',
+    record: q.get('record') === '1',
+  };
+})();
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -46,6 +64,10 @@ function App() {
   const [rightTurnSignal, setRightTurnSignal] = useState(false);
   const [isRearViewCameraActive, setIsRearViewCameraActive] = useState(false);
   const [isWifiMenuOpen, setIsWifiMenuOpen] = useState(false);
+  const [isBrowserOpen, setIsBrowserOpen] = useState(launchParams.app === 'browser');
+  const [isBrowserExpanded, setIsBrowserExpanded] = useState(launchParams.expanded);
+  const [leftPanelSize, setLeftPanelSize] = useState(DEFAULT_LEFT_PANEL_SIZE);
+  const [isRecordMode, setIsRecordMode] = useState(launchParams.record);
 
   const appsTopShelf = [
     'wipers',
@@ -85,6 +107,13 @@ function App() {
     if (iconName === 'open-shelf') {
       setIsShelfOpen(!isShelfOpen);
       setActiveModal(isShelfOpen ? null : 'app-shelf');
+    } else if (iconName === 'browser') {
+      // The browser is a full app pane, not one of the slide-up sheets.
+      setIsBrowserOpen(true);
+      setActiveNavIcon('browser');
+      setIsSliderOpen(false);
+      setIsShelfOpen(false);
+      setActiveModal(null);
     } else if (iconName.type === 'volume') {
       setActiveModal('volume');
     } else if (iconName.type === 'temperature') {
@@ -114,9 +143,16 @@ function App() {
   };
 
   const handleLeftPanelResize = (size) => {
+    setLeftPanelSize(size);
     if (size > 33 && isSliderOpen) {
       handleSliderClose();
     }
+  };
+
+  const handleBrowserClose = () => {
+    setIsBrowserOpen(false);
+    setIsBrowserExpanded(false);
+    if (activeNavIcon === 'browser') setActiveNavIcon(null);
   };
 
   const handleToggleFrunk = () => {
@@ -157,6 +193,13 @@ function App() {
     }
   }, [activeGear]);
 
+  // Record mode: nothing on screen but the centre display, so a window
+  // capture needs no cropping.
+  useEffect(() => {
+    document.body.classList.toggle('recordMode', isRecordMode);
+    return () => document.body.classList.remove('recordMode');
+  }, [isRecordMode]);
+
 
   const renderModalContent = () => {
     switch (activeModal) {
@@ -177,10 +220,18 @@ function App() {
             </div>
             <div className="appShelf">
               {apps.map((icon, index) => (
-                <div key={index} className="appShelfIcon">
-                  <img 
-                    src={getImagePath(`app-${icon}.svg`)} 
-                    alt={`${icon} icon`} 
+                <div
+                  key={index}
+                  className="appShelfIcon"
+                  onClick={() => {
+                    setIsShelfOpen(false);
+                    setActiveModal(null);
+                    handleNavIconClick(icon);
+                  }}
+                >
+                  <img
+                    src={getImagePath(`app-${icon}.svg`)}
+                    alt={`${icon} icon`}
                   />
                   <div className="appShelfIconText">{formatAppName(icon)}</div>
                 </div>
@@ -298,6 +349,18 @@ function App() {
             console.log('Trunk toggled');
             handleToggleTrunk();
             break;
+          case 'B':
+            event.preventDefault();
+            handleNavIconClick('browser');
+            break;
+          case 'E':
+            event.preventDefault();
+            setIsBrowserExpanded(prev => !prev);
+            break;
+          case 'R':
+            event.preventDefault();
+            setIsRecordMode(prev => !prev);
+            break;
           case 'M':
             console.log('Focus on Navigate Input');
             event.preventDefault(); // Prevent 'M' from being typed
@@ -329,7 +392,7 @@ function App() {
       <UserProfileProvider>
         {isLoading && <LoadingScreen />}
         <div id="displayBezel" ref={appContentRef} style={{display: isLoading ? 'none' : 'block'}}>
-          <div className="displayWrapper">
+          <div className="displayWrapper" style={{ '--lp': `${leftPanelSize}%` }}>
           {/* <div className="screenTooSmallError">I'm sorry Dave, I'm afraid I can't do that{dots}</div> */}
             <ErrorScreen />
             <PanelGroup autoSaveId="example" direction="horizontal" className="horizontalPanelGroup">
@@ -391,7 +454,17 @@ function App() {
                 />
               </Panel>
             </PanelGroup>
-            <BtmNavBar 
+            {isBrowserOpen && (
+              <div className={`browserHost${isBrowserExpanded ? ' expanded' : ''}`}>
+                <Browser
+                  expanded={isBrowserExpanded}
+                  onToggleExpand={() => setIsBrowserExpanded(v => !v)}
+                  onClose={handleBrowserClose}
+                  initialUrl={launchParams.url}
+                />
+              </div>
+            )}
+            <BtmNavBar
               handleNavIconClick={handleNavIconClick}
               temperature={temperature}
               setTemperature={setTemperature}

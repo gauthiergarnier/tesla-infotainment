@@ -9,12 +9,16 @@ html, body { width:100%;  overflow: hidden; }
   -webkit-overflow-scrolling: touch;
 }
 
+/* The Model 3/Y centre display is 1920x1200 — 8:5, not 16:9. Getting this
+   wrong stretches every element in the UI, so it is the single most visible
+   fidelity fix. (The S/X portrait screen is 1200x1920; see QCSIZE in the
+   firmware's /etc/RunQtCar.env.) */
 #displayBezel {
   background-color: #000000;
   box-sizing: border-box;
   padding: 2%;
-  aspect-ratio: 16 / 9;
-  max-height: 748px;
+  aspect-ratio: 8 / 5;
+  max-height: 854px;
   max-width: 1366px;
   margin: 0 auto 20px;
   border-radius: 3.5% / 5%;
@@ -29,7 +33,71 @@ html, body { width:100%;  overflow: hidden; }
   position: relative;
   width: 100%;
   height: 100%;
-  max-height: 680px;
+}
+
+/* ------------------------------------------------------------------------
+   Web browser app pane.
+
+   The browser is not one of the slide-up sheets — on the car it is a full app
+   pane that occupies the display area to the right of the car card, and its
+   expand button lets it take the whole screen. `--lp` is the live width of the
+   left panel, published by App.js as the panels are dragged.
+   ------------------------------------------------------------------------ */
+
+.browserHost {
+  position: absolute;
+  top: 0;
+  left: var(--lp, 40%);
+  right: 0;
+  height: 87%;
+  z-index: 6;
+  overflow: hidden;
+  background: #ebebeb;
+  transition: left 0.25s ease-out;
+}
+
+.browserHost.expanded {
+  left: 0;
+}
+
+/* ------------------------------------------------------------------------
+   Record mode (Shift+R, or ?record=1).
+
+   Strips the desk, the bezel and every authoring affordance so a window
+   capture is nothing but the centre display, pixel-for-pixel.
+   ------------------------------------------------------------------------ */
+
+body.recordMode {
+  background: #000;
+}
+
+body.recordMode #root {
+  height: 100vh;
+  padding: 0;
+  background: #000;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+body.recordMode #displayBezel {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  max-width: none;
+  max-height: none;
+  width: min(100vw, calc(100vh * 8 / 5));
+  height: min(100vh, calc(100vw * 5 / 8));
+}
+
+body.recordMode .horizontalPanelGroup {
+  border-radius: 0;
+}
+
+body.recordMode .small-screen-message {
+  display: none !important;
 }
 
 .App {

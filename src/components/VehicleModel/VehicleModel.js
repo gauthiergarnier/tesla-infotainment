@@ -4,6 +4,7 @@ import { Stage, useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from 'three';
 import { useSpring, a } from '@react-spring/three';
 import { getCarModelPath } from '../../utils/assetPaths';
+import { VEHICLE } from '../../config/vehicleConfig';
 import './VehicleModel.css';
 
 function easeInOutCubic(t) {
@@ -11,7 +12,7 @@ function easeInOutCubic(t) {
 }
 
 function Model({ rotateToFrunk, rotateToTrunk, activeGear, ...props }) {
-  const modelPath = getCarModelPath('tesla-model-3-2018.glb');
+  const modelPath = getCarModelPath(VEHICLE.file);
   const { scene } = useGLTF(modelPath);
   const modelRef = useRef();
   const frunkRef = useRef();
@@ -30,13 +31,13 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, ...props }) {
   const [isDriving, setIsDriving] = useState(false);
 
   useEffect(() => {
-    const frunkPart = scene.getObjectByName("bonnet_dummy");
-    const trunkPart = scene.getObjectByName("boot_dummy");
+    const frunkPart = scene.getObjectByName(VEHICLE.parts.frunk);
+    const trunkPart = scene.getObjectByName(VEHICLE.parts.trunk);
     if (frunkPart) frunkRef.current = frunkPart;
     if (trunkPart) trunkRef.current = trunkPart;
 
     // Find and set up door parts
-    const doorNames = ["door_lf_dummy", "door_lr_dummy", "door_rf_dummy", "door_rr_dummy"];
+    const doorNames = VEHICLE.parts.doors;
     doorNames.forEach(doorName => {
       const doorPart = scene.getObjectByName(doorName);
       if (doorPart) {

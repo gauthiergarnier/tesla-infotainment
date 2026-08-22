@@ -21,6 +21,7 @@ const BtmNavBar = ({
         // 'theater',
         'arcade',
         'bluetooth',
+        'browser',
         'apple-music',
         'dashcam',
         'open-shelf',

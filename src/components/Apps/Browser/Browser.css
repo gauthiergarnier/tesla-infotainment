@@ -1,0 +1,312 @@
+/*
+ * Sizes below are the car's real pixel dimensions, taken from the chrome
+ * assets in /usr/tesla/UI/assets/day/web/ (60x60 icon buttons, a 44px address
+ * field), multiplied by --wb-scale so the panel keeps those proportions at any
+ * rendered width. --wb-scale is set from JS as panelWidth / 1180, 1180px being
+ * roughly how wide the browser panel is on a 1920x1200 centre display.
+ */
+
+.teslaBrowser {
+  --wb-scale: 0.62;
+  --wb-ink: #4a4a4a;
+  --wb-ink-dim: #9a9a9a;
+  --wb-chrome: #ebebeb;
+  --wb-field: #ffffff;
+  --wb-line: #d5d5d5;
+  --wb-accent: #3e7bfa;
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--wb-chrome);
+  font-family: 'Universal Sans Text', 'Universal Sans', 'Inter', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ---------------------------------------------------------------- toolbar */
+
+.wbToolbar {
+  display: flex;
+  align-items: center;
+  gap: calc(8px * var(--wb-scale));
+  flex: 0 0 auto;
+  padding: calc(10px * var(--wb-scale)) calc(16px * var(--wb-scale));
+  background: var(--wb-chrome);
+  border-bottom: 1px solid var(--wb-line);
+}
+
+.wbIcon {
+  flex: 0 0 auto;
+  width: calc(60px * var(--wb-scale));
+  height: calc(60px * var(--wb-scale));
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--wb-ink-dim);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.wbIcon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.wbIcon:hover:not(:disabled) { background: rgba(0, 0, 0, 0.05); }
+.wbIcon:active:not(:disabled) { background: rgba(0, 0, 0, 0.11); }
+.wbIcon:disabled { opacity: 0.3; cursor: default; }
+.wbIcon.on { color: var(--wb-ink); }
+
+/* ---------------------------------------------------------- address field */
+
+.wbAddress {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  height: calc(44px * var(--wb-scale));
+  margin: 0 calc(8px * var(--wb-scale));
+  padding: 0 calc(18px * var(--wb-scale));
+  background: var(--wb-field);
+  border: 1px solid var(--wb-line);
+  border-radius: calc(22px * var(--wb-scale));
+  overflow: hidden;
+}
+
+.wbAddress.editing {
+  border-color: var(--wb-accent);
+  box-shadow: 0 0 0 calc(2px * var(--wb-scale)) rgba(62, 123, 250, 0.18);
+}
+
+.wbAddress input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--wb-ink);
+  font: inherit;
+  font-size: calc(22px * var(--wb-scale));
+  line-height: 1;
+}
+
+.wbLock {
+  flex: 0 0 auto;
+  width: calc(26px * var(--wb-scale));
+  height: calc(26px * var(--wb-scale));
+  margin-right: calc(8px * var(--wb-scale));
+  color: var(--wb-ink-dim);
+}
+
+.wbLock svg { width: 100%; height: 100%; display: block; }
+
+/* The car draws load progress inside the address field itself — it ships a
+   dedicated text_field_loading_background.png for this. */
+.wbProgress {
+  position: absolute;
+  inset: 0 100% 0 0;
+  background: rgba(62, 123, 250, 0.13);
+  pointer-events: none;
+}
+
+.wbProgress.running {
+  animation: wbLoad 0.9s ease-out forwards;
+}
+
+@keyframes wbLoad {
+  0%   { right: 100%; }
+  60%  { right: 25%; }
+  100% { right: 0; }
+}
+
+/* ------------------------------------------------------------- favourites */
+
+.wbFavorites {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(14px * var(--wb-scale));
+  padding: calc(18px * var(--wb-scale)) calc(20px * var(--wb-scale));
+  background: #f6f6f6;
+  border-bottom: 1px solid var(--wb-line);
+}
+
+.wbFavorite {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8px * var(--wb-scale));
+  width: calc(120px * var(--wb-scale));
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--wb-ink);
+}
+
+.wbFavoriteGlyph {
+  display: grid;
+  place-items: center;
+  width: calc(72px * var(--wb-scale));
+  height: calc(72px * var(--wb-scale));
+  border-radius: calc(16px * var(--wb-scale));
+  background: #ffffff;
+  border: 1px solid var(--wb-line);
+  font-size: calc(30px * var(--wb-scale));
+  font-weight: 600;
+  color: var(--wb-ink);
+}
+
+.wbFavorite:active .wbFavoriteGlyph { background: #e9e9e9; }
+
+.wbFavoriteLabel {
+  max-width: 100%;
+  font-size: calc(18px * var(--wb-scale));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* --------------------------------------------------------------- viewport */
+
+.wbViewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #ffffff;
+}
+
+.wbFrame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  display: block;
+  background: #ffffff;
+}
+
+.wbScreens {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.wbScreenMedia {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: top center;
+  display: block;
+}
+
+.wbScreenPlaceholder {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12px * var(--wb-scale));
+  align-items: center;
+  text-align: center;
+  padding: calc(40px * var(--wb-scale));
+  color: var(--wb-ink-dim);
+}
+
+.wbScreenPlaceholder strong {
+  font-size: calc(34px * var(--wb-scale));
+  color: var(--wb-ink);
+  font-weight: 600;
+}
+
+.wbScreenPlaceholder span { font-size: calc(20px * var(--wb-scale)); max-width: 32em; }
+
+.wbScreenNav {
+  position: absolute;
+  bottom: calc(20px * var(--wb-scale));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: calc(16px * var(--wb-scale));
+  padding: calc(8px * var(--wb-scale)) calc(16px * var(--wb-scale));
+  border-radius: calc(24px * var(--wb-scale));
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font-size: calc(18px * var(--wb-scale));
+}
+
+.wbScreenNav button {
+  width: calc(36px * var(--wb-scale));
+  height: calc(36px * var(--wb-scale));
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font-size: calc(24px * var(--wb-scale));
+  line-height: 1;
+  cursor: pointer;
+}
+
+.wbScreenNav button:disabled { opacity: 0.35; cursor: default; }
+
+.wbHint {
+  position: absolute;
+  left: 50%;
+  bottom: calc(24px * var(--wb-scale));
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: calc(12px * var(--wb-scale)) calc(20px * var(--wb-scale));
+  border-radius: calc(10px * var(--wb-scale));
+  background: rgba(20, 20, 20, 0.88);
+  color: #f0f0f0;
+  font-size: calc(17px * var(--wb-scale));
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.wbHint code {
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+  background: rgba(255, 255, 255, 0.14);
+  padding: 0 0.35em;
+  border-radius: 3px;
+}
+
+/* ------------------------------------------------------------ mode switch */
+
+.wbModeSwitch {
+  position: absolute;
+  top: calc(14px * var(--wb-scale));
+  right: calc(14px * var(--wb-scale));
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border-radius: calc(8px * var(--wb-scale));
+  background: rgba(0, 0, 0, 0.06);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 5;
+}
+
+.teslaBrowser:hover .wbModeSwitch { opacity: 1; }
+
+.wbModeSwitch button {
+  border: 0;
+  border-radius: calc(6px * var(--wb-scale));
+  padding: calc(5px * var(--wb-scale)) calc(11px * var(--wb-scale));
+  background: transparent;
+  color: var(--wb-ink-dim);
+  font: inherit;
+  font-size: calc(15px * var(--wb-scale));
+  cursor: pointer;
+}
+
+.wbModeSwitch button.on { background: #fff; color: var(--wb-ink); }
+
+/* Recording mode strips the authoring affordances. */
+body.recordMode .wbModeSwitch,
+body.recordMode .wbHint { display: none !important; }

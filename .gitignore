@@ -38,3 +38,9 @@ package-lock.json
 
 # Optional: Uncomment if using yarn
 # yarn.lock
+
+# Firmware-derived assets imported by scripts/import-firmware-model.sh.
+# These are Tesla's; keep them out of the public fork by default.
+public/car-models/Ego__*.glb
+public/car-models/Ego__*.json
+public/demo/
