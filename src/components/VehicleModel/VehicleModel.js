@@ -148,6 +148,62 @@ function lightMeshOn(o, lights, blinkPhase) {
   return !!lights[g];
 }
 
+const GLASS_ANY = /glass|window/i;
+const GLASS_INTERIOR = /^Glass_.*Interior/i;
+
+/**
+ * Make the glass read as glass, and stop it glitching at angles.
+ *
+ * Two faults come straight from the Godot export:
+ *
+ *  - Every pane is alphaMode BLEND but keeps depthWrite on and the default
+ *    render order, so the windscreen, side windows and roof write depth over
+ *    one another. At some viewing angles a near pane then occludes a far one it
+ *    should show through, and the transparent sort flips - panes flicker or
+ *    drop out. Glass must draw AFTER all opaque geometry (renderOrder 10) and
+ *    write no depth, so the panes simply blend in whatever order they arrive.
+ *
+ *  - The `Glass_*Interior` meshes are the panes' cabin-facing skins, modelled
+ *    to be seen from inside. From outside their wrapped rims surface through the
+ *    outer panes and, drawn late, paint sharp dark patches over the roof and
+ *    rear window. They are hidden here (this view is always exterior).
+ *
+ * Materials are cloned before mutation so the shared glTF cache is not touched
+ * when several vehicles are viewed in a session.
+ */
+function prepareGlass(root) {
+  if (root.userData.glassPrepared) return;
+  root.userData.glassPrepared = true;
+
+  root.traverse((o) => {
+    if (!o.isMesh || o.userData.isFx) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    const names = mats.map((m) => (m && m.name) || '');
+    const isGlass = names.some((n) => GLASS_ANY.test(n));
+    if (!isGlass) return;
+
+    // Cabin-facing skins are for the inside view only.
+    if (names.some((n) => GLASS_INTERIOR.test(n))) {
+      o.visible = false;
+      o.userData.hidden = true;
+      return;
+    }
+
+    o.renderOrder = 10;
+    const own = mats.map((m) => {
+      if (!m || !GLASS_ANY.test(m.name || '')) return m;
+      const c = m.clone();
+      c.name = m.name;
+      c.transparent = true;
+      c.depthWrite = false;   // the fix: no depth from glass, so panes blend
+      if (!(c.opacity > 0 && c.opacity < 1)) c.opacity = 0.86;
+      c.needsUpdate = true;
+      return c;
+    });
+    o.material = Array.isArray(o.material) ? own : own[0];
+  });
+}
+
 function hideNonExteriorMeshes(root) {
   root.traverse((o) => {
     if (!o.isMesh) return;
@@ -323,6 +379,7 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
   useLayoutEffect(() => {
     hideNonExteriorMeshes(scene);
     tagLightMeshes(scene);
+    prepareGlass(scene);
   }, [scene]);
 
   /* Steady lamps switch here rather than in useFrame: a throttled or paused
