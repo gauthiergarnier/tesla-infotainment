@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { DEFAULT_SCENE } from '../config/sceneOptions';
 
 /* The car's Display page offers Dark / Light / Auto, and Auto follows the
@@ -16,6 +16,11 @@ const isNightHour = () => {
   return hour < 7 || hour >= 19;
 };
 
+const initialIsDark = () => {
+  const a = initialAppearance();
+  return a === 'dark' || (a === 'auto' && isNightHour());
+};
+
 /**
  * Scene state shared between the Lights settings page and the car card.
  *
@@ -27,7 +32,12 @@ const SceneContext = createContext(null);
 
 export const SceneProvider = ({ children }) => {
   const [lights, setLights] = useState(DEFAULT_SCENE.lights);
-  const [environment, setEnvironment] = useState(DEFAULT_SCENE.environment);
+  /* The scene backdrop tracks the UI theme: dark theme -> dark backdrop, light
+     theme -> light. The Lights page can still pick another environment, and that
+     choice holds until the theme changes, at which point the backdrop re-syncs
+     with the new theme. */
+  const [environment, setEnvironmentState] = useState(() => (initialIsDark() ? 'dark' : 'light'));
+  const envUserSet = useRef(false);
   const [ambient, setAmbient] = useState(DEFAULT_SCENE.ambient);
   const [exposure, setExposure] = useState(DEFAULT_SCENE.exposure);
   /* Road speed in mph, shared so the speedometer and the visualisation cannot
@@ -35,6 +45,18 @@ export const SceneProvider = ({ children }) => {
   const [speed, setSpeed] = useState(0);
   const [appearance, setAppearance] = useState(initialAppearance);
   const isDark = appearance === 'dark' || (appearance === 'auto' && isNightHour());
+
+  // A manual environment pick from the Lights page; sticks within a theme.
+  const setEnvironment = useCallback((key) => {
+    envUserSet.current = true;
+    setEnvironmentState(key);
+  }, []);
+
+  // A theme change re-asserts the backdrop and clears any manual override.
+  useEffect(() => {
+    envUserSet.current = false;
+    setEnvironmentState(isDark ? 'dark' : 'light');
+  }, [isDark]);
 
   const toggleLight = useCallback((key) => {
     setLights((prev) => {
