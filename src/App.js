@@ -73,7 +73,7 @@ function App() {
   const [leftPanelSize, setLeftPanelSize] = useState(DEFAULT_LEFT_PANEL_SIZE);
   const [isRecordMode, setIsRecordMode] = useState(launchParams.record);
   const [isTripActive, setIsTripActive] = useState(launchParams.trip);
-  const { speed, setSpeed } = useScene();
+  const { speed, setSpeed, isDark } = useScene();
   const speedRampRef = useRef(null);
 
   const appsTopShelf = [
@@ -217,14 +217,11 @@ function App() {
     }
   }, [activeGear]);
 
-  /* Dark theme. The car switches on the clock; ?theme=day|night pins it, which
-     keeps recorded takes deterministic and drives the map style too. */
+  /* Appearance comes from SceneContext, where the Display settings page sets
+     it; this just mirrors it onto <body> for the stylesheet. */
   useEffect(() => {
-    const hour = new Date().getHours();
-    const dark = launchParams.theme === 'night'
-      || (launchParams.theme !== 'day' && (hour < 7 || hour >= 19));
-    document.body.classList.toggle('theme-dark', dark);
-  }, []);
+    document.body.classList.toggle('theme-dark', isDark);
+  }, [isDark]);
 
   // Record mode: nothing on screen but the centre display, so a window
   // capture needs no cropping.

@@ -2,6 +2,7 @@ import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react'
 import { getImagePath } from '../../utils/assetPaths';
 import { TESLA_MAP_STYLES } from '../../config/mapStyles';
 import TripPlanner from '../TripPlanner/TripPlanner';
+import { useScene } from '../../contexts/SceneContext';
 import { GoogleMap, useJsApiLoader, Marker, Autocomplete, DirectionsRenderer } from '@react-google-maps/api';
 import CarLock from '../CarLock/CarLock';
 import Clock from '../Clock/Clock';
@@ -43,13 +44,8 @@ export function MapNavigation({ onWifiClick, showTrip = false, onEndTrip }) {
      style and a "quiet label" variant it switches to while navigating, so
      labels stop competing with the route. Day/night follows the clock unless
      ?theme=day|night pins it, which keeps recorded takes deterministic. */
-  const isNight = useMemo(() => {
-    const forced = new URLSearchParams(window.location.search).get('theme');
-    if (forced === 'night') return true;
-    if (forced === 'day') return false;
-    const h = new Date().getHours();
-    return h < 7 || h >= 19;
-  }, []);
+  // Follows the Display page's Dark / Light / Auto setting.
+  const { isDark: isNight } = useScene();
 
   const mapStyle = useMemo(() => {
     if (mapType === 'satellite') {

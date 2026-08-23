@@ -1,6 +1,21 @@
 import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { DEFAULT_SCENE } from '../config/sceneOptions';
 
+/* The car's Display page offers Dark / Light / Auto, and Auto follows the
+   clock. ?theme=day|night pins it, which keeps recorded takes deterministic. */
+const initialAppearance = () => {
+  if (typeof window === 'undefined') return 'auto';
+  const q = new URLSearchParams(window.location.search).get('theme');
+  if (q === 'night') return 'dark';
+  if (q === 'day') return 'light';
+  return 'auto';
+};
+
+const isNightHour = () => {
+  const hour = new Date().getHours();
+  return hour < 7 || hour >= 19;
+};
+
 /**
  * Scene state shared between the Lights settings page and the car card.
  *
@@ -18,6 +33,8 @@ export const SceneProvider = ({ children }) => {
   /* Road speed in mph, shared so the speedometer and the visualisation cannot
      disagree - the wheels and the lane scroll are both derived from it. */
   const [speed, setSpeed] = useState(0);
+  const [appearance, setAppearance] = useState(initialAppearance);
+  const isDark = appearance === 'dark' || (appearance === 'auto' && isNightHour());
 
   const toggleLight = useCallback((key) => {
     setLights((prev) => {
@@ -35,8 +52,9 @@ export const SceneProvider = ({ children }) => {
 
   const value = useMemo(
     () => ({ lights, toggleLight, resetLights, environment, setEnvironment,
-             ambient, setAmbient, exposure, setExposure, speed, setSpeed }),
-    [lights, toggleLight, resetLights, environment, ambient, exposure, speed]
+             ambient, setAmbient, exposure, setExposure, speed, setSpeed,
+             appearance, setAppearance, isDark }),
+    [lights, toggleLight, resetLights, environment, ambient, exposure, speed, appearance, isDark]
   );
 
   return <SceneContext.Provider value={value}>{children}</SceneContext.Provider>;
