@@ -554,3 +554,24 @@ body.recordMode .small-screen-message {
   padding: 8%;
   box-sizing: border-box;
 }
+
+/* In Drive the visualisation takes the room the car card had, and the media
+   card drops to a compact strip - the proportions the real display uses when
+   the driving view is up. The canvas has no intrinsic height, so it has to be
+   told to take the slack or it collapses to a band. */
+.leftPanel.driving .musicPanel {
+  height: 22%;
+  flex: 0 0 auto;
+  transition: height 0.3s ease-out;
+}
+
+.leftPanel.driving .carModelWrapper {
+  flex: 1 1 auto;
+  min-height: 0;
+  bottom: 0;
+}
+
+.leftPanel.driving .carModelStatus {
+  opacity: 0;
+  pointer-events: none;
+}

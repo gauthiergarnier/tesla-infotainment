@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { SceneProvider } from './contexts/SceneContext';
 
 /*
  * No <React.StrictMode>.
@@ -17,6 +18,10 @@ import reportWebVitals from './reportWebVitals';
  * but the dev server is exactly where demos get recorded.
  */
 const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(<App />);
+root.render(
+  <SceneProvider>
+    <App />
+  </SceneProvider>
+);
 
 reportWebVitals();

@@ -4,7 +4,7 @@ import { VehicleModel } from './components/VehicleModel/VehicleModel';
 import { getImagePath, getAppIconPath, isTeslaIcon } from './utils/assetPaths';
 import { UserProfileProvider } from './contexts/UserProfileContext';
 import { CarLockProvider } from './contexts/CarLockContext';
-import { SceneProvider } from './contexts/SceneContext';
+import { useScene } from './contexts/SceneContext';
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { MapNavigation } from './components/MapNavigation/MapNavigation';
 import { MusicPanel } from './components/MusicPanel/MusicPanel';
@@ -73,6 +73,8 @@ function App() {
   const [leftPanelSize, setLeftPanelSize] = useState(DEFAULT_LEFT_PANEL_SIZE);
   const [isRecordMode, setIsRecordMode] = useState(launchParams.record);
   const [isTripActive, setIsTripActive] = useState(launchParams.trip);
+  const { speed, setSpeed } = useScene();
+  const speedRampRef = useRef(null);
 
   const appsTopShelf = [
     'wipers',
@@ -172,6 +174,23 @@ function App() {
 
   const handleGearSelect = (gear) => {
     setActiveGear(gear);
+
+    /* Selecting D rolls the speed up rather than snapping to it: the wheels and
+       the lane scroll both derive from this number, so a ramp gives the
+       visualisation something to actually animate. */
+    clearInterval(speedRampRef.current);
+    if (gear === 'D') {
+      const target = 51;
+      const started = performance.now();
+      speedRampRef.current = setInterval(() => {
+        const t = Math.min(1, (performance.now() - started) / 6000);
+        setSpeed(Math.round(target * (1 - Math.pow(1 - t, 3))));
+        if (t >= 1) clearInterval(speedRampRef.current);
+      }, 80);
+    } else {
+      setSpeed(0);
+    }
+
     if (gear === 'R') {
       setActiveNavIcon('camera');
       setIsSliderOpen(true);
@@ -405,7 +424,6 @@ function App() {
 
   return (
     <CarLockProvider>
-      <SceneProvider>
       <UserProfileProvider>
         {isLoading && <LoadingScreen />}
         <div id="displayBezel" ref={appContentRef} style={{display: isLoading ? 'none' : 'block'}}>
@@ -417,7 +435,7 @@ function App() {
                 defaultSize={DEFAULT_LEFT_PANEL_SIZE}
                 minSize={DEFAULT_LEFT_PANEL_SIZE}
                 maxSize={100}
-                className="leftPanel"
+                className={`leftPanel${activeGear === 'D' ? ' driving' : ''}`}
                 ref={leftPanelRef}
                 onResize={handleLeftPanelResize}
               >
@@ -428,7 +446,7 @@ function App() {
                   </div>
                   <div className={`drivingGearIcons`}>
                     <div className={`speedometer ${activeGear === 'D' ? 'fade-in' : 'fade-out'}`}>
-                      0<br />
+                      {speed}<br />
                       <span>MPH</span>
                     </div>
                     <div className={`turnSignal ${leftTurnSignal ? 'active' : ''}`} style={{opacity: leftTurnSignal ? 1 : 0}}>
@@ -510,7 +528,6 @@ function App() {
           At least until I tweak the mobile styles.</span>
         </div>
       </UserProfileProvider>
-      </SceneProvider>
     </CarLockProvider>
   );
 }

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useLayoutEffect, useMemo, Suspense } from 'react';
-import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Canvas, useFrame, useThree, useLoader } from "@react-three/fiber";
 import { useGLTF, OrbitControls } from "@react-three/drei";
 import * as THREE from 'three';
 import { useSpring, a } from '@react-spring/three';
@@ -11,6 +11,12 @@ import {
   ENVIRONMENTS,
   REFLECTION_URL,
   CUBE_FACES,
+  LANES,
+  LANE_WIDTH,
+  ROAD_LENGTH,
+  DASH_CYCLE_M,
+  LANE_TEXTURE,
+  ROAD_SURFACE,
 } from '../../config/sceneOptions';
 import {
   VEHICLES,
@@ -208,6 +214,7 @@ function applyPaint(root, color) {
 function mountWheels(body, vehicle, wheelProto) {
   const group = new THREE.Group();
   group.name = '__simWheels';
+  const spinners = [];
 
   const wanted = new Set((vehicle.mounts || []).map((m) => m.name));
   const candidates = [];
@@ -229,6 +236,22 @@ function mountWheels(body, vehicle, wheelProto) {
     const inst = wheelProto.clone(true);
     inst.name = '__simWheel';
 
+    /* Work out which local axis is the axle and which way it points, from the
+       mount basis. It is not the same axis on every vehicle - the cars spin
+       about local Z because the scenes carry a 90 degree turn, while the Semi
+       spins about X - and the left-hand mounts are turned 180 degrees so one
+       wheel model fits both sides. Rolling them all the same way would spin the
+       two sides in opposite directions. */
+    const m = mount.matrix;
+    const cols = [[m[0], m[1], m[2]], [m[4], m[5], m[6]], [m[8], m[9], m[10]]];
+    let axle = 0;
+    for (let i = 1; i < 3; i++) {
+      if (Math.abs(cols[i][0]) > Math.abs(cols[axle][0])) axle = i;
+    }
+    inst.userData.spinAxis = ['x', 'y', 'z'][axle];
+    inst.userData.spinSign = cols[axle][0] >= 0 ? 1 : -1;
+    spinners.push(inst);
+
     if (node) {
       node.userData.__taken = true;
       node.add(inst);
@@ -244,15 +267,18 @@ function mountWheels(body, vehicle, wheelProto) {
 
   for (const c of candidates) delete c.userData.__taken;
   body.add(group);
+  body.userData.spinners = spinners;
+  body.userData.wheelRadius = vehicle.wheel_radius || 0.34;
 
   return () => {
+    body.userData.spinners = [];
     body.remove(group);
     group.clear();
     for (const inst of attached) if (inst.parent) inst.parent.remove(inst);
   };
 }
 
-function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, wheelKey, lights, ...props }) {
+function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, wheelKey, lights, driving, speedMph, ...props }) {
   const vehicle = VEHICLES[vehicleId] || VEHICLES[DEFAULT_VEHICLE];
   const wheelDef = WHEELS[wheelKey] || WHEELS[vehicle.default_wheel];
 
@@ -352,7 +378,9 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
     setTrunkStartAngle(trunkRef.current ? trunkRef.current.rotation.x : 0);
 
     if (activeGear === 'D') {
-      setTargetRotation(Math.PI / 4.3);
+      /* Driving: the car points straight down the road, away from the camera,
+         which is the view the Autopilot visualisation shows. */
+      setTargetRotation(0);
     } else if (rotateToFrunk) {
       setFrunkTargetAngle(Math.PI / 6);
       setTrunkTargetAngle(0);
@@ -371,6 +399,17 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
   }, [scene, rotateToFrunk, rotateToTrunk, activeGear, defaultRotation]);
 
   useFrame((state, delta) => {
+    /* Roll the wheels from road speed and wheel radius, the way the app does -
+       it never translates the car, it spins the wheel nodes and scrolls the
+       lane markings. */
+    if (driving && speedMph > 0) {
+      const v = speedMph * 0.44704;
+      const r = scene.userData.wheelRadius || 0.34;
+      for (const w of scene.userData.spinners || []) {
+        w.rotation[w.userData.spinAxis] -= (v / r) * delta * w.userData.spinSign;
+      }
+    }
+
     // Only the indicators need the frame loop; the steady lamps are applied in
     // an effect so they do not depend on it.
     if (lights.turnL || lights.turnR || lights.hazard) {
@@ -437,6 +476,62 @@ class SceneErrorBoundary extends React.Component {
 }
 
 /** Exposes the r3f state on window, for diagnosing from the console. */
+/**
+ * The road under the car in the driving visualisation.
+ *
+ * Three strips, positioned with the app's own numbers, alpha-scissored rather
+ * than blended because that is what the app's material does. The dashed texture
+ * scrolls rearward at road speed: the strip's v=1 end points forward (-Z), so a
+ * rising offset slides the markings past the car, which is what driving forward
+ * looks like.
+ */
+function Road({ visible, speedMph }) {
+  const texture = useLoader(THREE.TextureLoader, LANE_TEXTURE);
+
+  const lanes = useMemo(() => {
+    const tex = texture.clone();
+    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+    tex.repeat.set(1, ROAD_LENGTH / DASH_CYCLE_M);
+    tex.colorSpace = THREE.SRGBColorSpace;
+    tex.needsUpdate = true;
+    return { tex };
+  }, [texture]);
+
+  useFrame((state, delta) => {
+    if (!visible) return;
+    const v = (speedMph || 0) * 0.44704; // mph -> m/s
+    lanes.tex.offset.y = (lanes.tex.offset.y + (v * delta) / DASH_CYCLE_M) % 1;
+  });
+
+  return (
+    <group visible={visible}>
+      {LANES.map((lane) => (
+        <mesh
+          key={lane.x}
+          position={[lane.x, 0.004, 0]}
+          rotation={[-Math.PI / 2, 0, 0]}
+          renderOrder={2}
+        >
+          <planeGeometry args={[LANE_WIDTH, ROAD_LENGTH]} />
+          <meshBasicMaterial
+            transparent
+            alphaTest={0.5}
+            depthWrite={false}
+            map={lane.dashed ? lanes.tex : null}
+            color={lane.color}
+          />
+        </mesh>
+      ))}
+      {/* The road surface itself: the app draws no sky, just a ground plane
+          fading out at the horizon. */}
+      <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
+        <planeGeometry args={[26, ROAD_LENGTH]} />
+        <meshBasicMaterial color={ROAD_SURFACE} />
+      </mesh>
+    </group>
+  );
+}
+
 function SceneProbe() {
   const state = useThree();
   useEffect(() => { window.__r3fState = state; }, [state]);
@@ -518,7 +613,7 @@ function SceneRig({ environment, exposure }) {
   return null;
 }
 
-function ControlledOrbitControls() {
+function ControlledOrbitControls({ driving }) {
   const { camera, gl } = useThree();
   const controlsRef = useRef();
   const [isInteracting, setIsInteracting] = useState(false);
@@ -532,7 +627,10 @@ function ControlledOrbitControls() {
 
   useEffect(() => {
     if (!controlsRef.current) return undefined;
-    controlsRef.current.target.set(0, 0.6, 0);
+    /* Parked, the camera looks at the middle of the car. Driving, it sits
+       directly behind and drops its aim down the road so the lane lines run to
+       a vanishing point, which is what the Autopilot view shows. */
+    controlsRef.current.target.set(0, driving ? 1.0 : 0.6, driving ? -6 : 0);
     controlsRef.current.update();
 
     const controls = controlsRef.current;
@@ -544,32 +642,50 @@ function ControlledOrbitControls() {
 
     controls.addEventListener('start', onStart);
     controls.addEventListener('end', onEnd);
-    controls.setAzimuthalAngle(defaultRotation);
+    // Azimuth 0 puts the camera on +Z, i.e. squarely behind a car whose nose
+    // points -Z.
+    if (driving) {
+      /* Behind the car and a little above it, aimed down the road. Set the
+         position outright: OrbitControls keeps whatever radius it already has,
+         so the Canvas' camera prop cannot move it once mounted. */
+      const elev = 0.30;
+      const dist = 11;
+      camera.position.set(
+        0,
+        controls.target.y + dist * Math.sin(elev),
+        controls.target.z + dist * Math.cos(elev)
+      );
+    } else {
+      controls.setAzimuthalAngle(defaultRotation);
+    }
     controls.update();
 
     return () => {
       controls.removeEventListener('start', onStart);
       controls.removeEventListener('end', onEnd);
     };
-  }, [defaultRotation, setSpring]);
+  }, [defaultRotation, setSpring, driving]);
 
   useEffect(() => {
+    // Driving owns the camera; letting the parked spring run would snap the
+    // azimuth back off the road every render.
+    if (driving) return;
     if (controlsRef.current && !isInteracting) {
       controlsRef.current.setAzimuthalAngle(springProps.rotation.get());
       controlsRef.current.update();
     }
-  }, [isInteracting, springProps.rotation]);
+  }, [isInteracting, springProps.rotation, driving]);
 
   return (
-    <a.group rotation-y={springProps.rotation}>
+    <a.group rotation-y={driving ? 0 : springProps.rotation}>
       <OrbitControls
         ref={controlsRef}
         args={[camera, gl.domElement]}
         enableZoom={false}
         enablePan={false}
-        enableRotate={true}
-        minPolarAngle={Math.PI / 2 - Math.PI / 5.14}
-        maxPolarAngle={Math.PI / 2 - Math.PI / 5.14}
+        enableRotate={!driving}
+        minPolarAngle={driving ? Math.PI / 2 - 0.30 : Math.PI / 2 - Math.PI / 5.14}
+        maxPolarAngle={driving ? Math.PI / 2 - 0.30 : Math.PI / 2 - Math.PI / 5.14}
       />
     </a.group>
   );
@@ -583,12 +699,14 @@ export function VehicleModel({
   colorKey = DEFAULT_COLOR,
   wheelKey,
 }) {
-  const { lights, environment, ambient, exposure } = useScene();
+  const { lights, environment, ambient, exposure, speed } = useScene();
+  const driving = activeGear === 'D';
   /* A 4.7 m car viewed at 45 degrees projects about 4.8 m across. At the old
      5 m the frame cut the bumpers off; 7 m leaves it room to breathe. */
-  const distance = 6.2;
+  // Driving pulls the camera back so the road runs to a vanishing point.
+  const distance = driving ? 11 : 6.2;
   const horizontalAngle = Math.PI / 4;
-  const verticalAngle = activeGear === 'D' ? Math.PI / 3 : Math.PI / 5.14;
+  const verticalAngle = driving ? 0.30 : Math.PI / 5.14;
 
   const cameraPosition = [
     distance * Math.cos(horizontalAngle) * Math.cos(verticalAngle),
@@ -626,6 +744,9 @@ export function VehicleModel({
       <SceneProbe />
       <SceneRig environment={environment} exposure={exposure} />
       <Suspense fallback={null}>
+        <Road visible={driving} speedMph={speed} />
+      </Suspense>
+      <Suspense fallback={null}>
         {/* Deliberately NOT drei's <Stage>. Stage normalises whatever it is
             given to a unit box, which blew a 4.7 m Model 3 up to 14.7 m and put
             the camera (fixed at 5 m) inside the car - the scene was rendering
@@ -640,11 +761,13 @@ export function VehicleModel({
             colorKey={colorKey}
             wheelKey={wheelKey}
             lights={lights}
+            driving={driving}
+            speedMph={speed}
           />
         </group>
       </Suspense>
       </SceneErrorBoundary>
-      <ControlledOrbitControls />
+      <ControlledOrbitControls driving={driving} />
     </Canvas>
   );
 }

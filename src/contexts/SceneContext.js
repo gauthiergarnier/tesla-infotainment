@@ -15,6 +15,9 @@ export const SceneProvider = ({ children }) => {
   const [environment, setEnvironment] = useState(DEFAULT_SCENE.environment);
   const [ambient, setAmbient] = useState(DEFAULT_SCENE.ambient);
   const [exposure, setExposure] = useState(DEFAULT_SCENE.exposure);
+  /* Road speed in mph, shared so the speedometer and the visualisation cannot
+     disagree - the wheels and the lane scroll are both derived from it. */
+  const [speed, setSpeed] = useState(0);
 
   const toggleLight = useCallback((key) => {
     setLights((prev) => {
@@ -32,8 +35,8 @@ export const SceneProvider = ({ children }) => {
 
   const value = useMemo(
     () => ({ lights, toggleLight, resetLights, environment, setEnvironment,
-             ambient, setAmbient, exposure, setExposure }),
-    [lights, toggleLight, resetLights, environment, ambient, exposure]
+             ambient, setAmbient, exposure, setExposure, speed, setSpeed }),
+    [lights, toggleLight, resetLights, environment, ambient, exposure, speed]
   );
 
   return <SceneContext.Provider value={value}>{children}</SceneContext.Provider>;

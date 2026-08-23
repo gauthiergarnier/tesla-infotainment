@@ -73,3 +73,26 @@ export const DEFAULT_SCENE = {
   ambient: 3.5,
   exposure: 1.0,
 };
+
+/**
+ * The driving visualisation's road.
+ *
+ * The app never moves the car: VehicleManager spins the wheel nodes from speed
+ * and wheel radius, and Road.gd scrolls the lane materials' uv1_offset. These
+ * are its own numbers - road.tscn puts the lane lines at +/-1.8 m and -5.2 m,
+ * and spline_mesh.tres makes each line 0.1 m wide over 100 m with the dash
+ * texture tiled 8 times, i.e. one dash cycle every 12.5 m.
+ */
+export const LANES = [
+  // Far edge and the near shoulder read white; the centre line is the yellow
+  // divider, which is what the day visualisation shows on a US road.
+  { x: -5.2, dashed: false, color: '#f4f4f4' },
+  { x: -1.8, dashed: true, color: '#e0b53c' },
+  { x: 1.8, dashed: false, color: '#f4f4f4' },
+];
+
+export const ROAD_SURFACE = '#9a9da1';
+export const LANE_WIDTH = 0.1;
+export const ROAD_LENGTH = 240;
+export const DASH_CYCLE_M = 12.5;
+export const LANE_TEXTURE = base.replace('/env/', '/road/') + 'dashed_lane.png';
