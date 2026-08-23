@@ -17,6 +17,7 @@ import {
   DASH_CYCLE_M,
   LANE_TEXTURE,
   ROAD_SURFACE,
+  ROAD_SURFACE_OPACITY,
 } from '../../config/sceneOptions';
 import {
   VEHICLES,
@@ -26,12 +27,18 @@ import {
   DEFAULT_VEHICLE,
   DEFAULT_COLOR,
   colorByKey,
+  resolvePart,
 } from '../../config/vehicleConfig';
 import './VehicleModel.css';
 
 function easeInOutCubic(t) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
+
+// Opening angles, added to each closure's resting hinge rotation.
+const FRUNK_OPEN = Math.PI / 6;    // hood tilts up at the front
+const TRUNK_OPEN = -Math.PI / 3.5; // tailgate lifts at the rear
+const DOOR_OPEN = Math.PI / 2.6;   // door swings out
 
 const isPaint = (m) => !!m && /^TESLAPAINT_/.test(m.name || '');
 
@@ -352,23 +359,32 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
   }, [scene, vehicle, wheelScene, colorKey]);
 
   useEffect(() => {
-    frunkRef.current = scene.getObjectByName(PARTS.frunk) || null;
-    trunkRef.current = scene.getObjectByName(PARTS.trunk) || null;
+    // Resolve the hinge nodes by trying each candidate name; the set differs
+    // across the fleet, so a fixed name silently animated nothing on the cars
+    // that use a different one (the Juniper Model Y has no bare `Hood`).
+    frunkRef.current = resolvePart(scene, PARTS.frunk);
+    trunkRef.current = resolvePart(scene, PARTS.trunk);
+    frunkRef.current && (frunkRef.current.userData.restX = frunkRef.current.rotation.x);
+    trunkRef.current && (trunkRef.current.userData.restX = trunkRef.current.rotation.x);
 
     doorRefs.current = {};
     const next = {};
-    for (const doorName of [...PARTS.doors, ...PARTS.falconDoors]) {
-      const part = scene.getObjectByName(doorName);
-      if (part) {
-        doorRefs.current[doorName] = part;
-        next[doorName] = { isOpen: false, angle: 0 };
-      }
-    }
-    setDoorStates(next);
-
-    scene.traverse((object) => {
-      if (object.isMesh && doorRefs.current[object.name]) object.userData.clickable = true;
+    const clickable = new Set();
+    [...PARTS.doors, ...PARTS.falconDoors].forEach((candidates, i) => {
+      const part = resolvePart(scene, candidates);
+      if (!part) return;
+      const key = 'door' + i;
+      part.userData.restY = part.rotation.y;
+      doorRefs.current[key] = part;
+      next[key] = { isOpen: false, angle: part.rotation.y };
+      // Any mesh under the hinge should open the door when clicked.
+      part.traverse((o) => { if (o.isMesh) clickable.add(o); });
     });
+    setDoorStates(next);
+    scene.traverse((o) => { o.userData.doorKey = null; });
+    for (const [key, node] of Object.entries(doorRefs.current)) {
+      node.traverse((o) => { if (o.isMesh) o.userData.doorKey = key; });
+    }
   }, [scene]);
 
   useEffect(() => {
@@ -377,22 +393,27 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
     setFrunkStartAngle(frunkRef.current ? frunkRef.current.rotation.x : 0);
     setTrunkStartAngle(trunkRef.current ? trunkRef.current.rotation.x : 0);
 
+    const frunkRest = frunkRef.current ? (frunkRef.current.userData.restX || 0) : 0;
+    const trunkRest = trunkRef.current ? (trunkRef.current.userData.restX || 0) : 0;
+
     if (activeGear === 'D') {
       /* Driving: the car points straight down the road, away from the camera,
          which is the view the Autopilot visualisation shows. */
       setTargetRotation(0);
+      setFrunkTargetAngle(frunkRest);
+      setTrunkTargetAngle(trunkRest);
     } else if (rotateToFrunk) {
-      setFrunkTargetAngle(Math.PI / 6);
-      setTrunkTargetAngle(0);
+      setFrunkTargetAngle(frunkRest + FRUNK_OPEN);
+      setTrunkTargetAngle(trunkRest);
       setTargetRotation(modelRef.current.rotation.y);
     } else if (rotateToTrunk) {
       setTargetRotation(defaultRotation - Math.PI / 2);
-      setFrunkTargetAngle(0);
-      setTrunkTargetAngle(-Math.PI / 3.5);
+      setFrunkTargetAngle(frunkRest);
+      setTrunkTargetAngle(trunkRest + TRUNK_OPEN);
     } else {
       setTargetRotation(defaultRotation);
-      setFrunkTargetAngle(0);
-      setTrunkTargetAngle(0);
+      setFrunkTargetAngle(frunkRest);
+      setTrunkTargetAngle(trunkRest);
     }
     animationProgressRef.current = 0;
     isAnimatingRef.current = true;
@@ -438,21 +459,22 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
     if (trunkRef.current) {
       trunkRef.current.rotation.x = THREE.MathUtils.lerp(trunkStartAngle, trunkTargetAngle, easedProgress);
     }
-    Object.entries(doorStates).forEach(([doorName, doorState]) => {
-      const part = doorRefs.current[doorName];
+    Object.entries(doorStates).forEach(([doorKey, doorState]) => {
+      const part = doorRefs.current[doorKey];
       if (!part) return;
-      const targetAngle = doorState.isOpen ? Math.PI / 2.6 : 0;
+      const rest = part.userData.restY || 0;
+      const targetAngle = rest + (doorState.isOpen ? DOOR_OPEN : 0);
       const newAngle = THREE.MathUtils.lerp(doorState.angle, targetAngle, easedProgress);
       part.rotation.y = newAngle;
-      setDoorStates((prev) => ({ ...prev, [doorName]: { ...prev[doorName], angle: newAngle } }));
+      setDoorStates((prev) => ({ ...prev, [doorKey]: { ...prev[doorKey], angle: newAngle } }));
     });
   });
 
   const handleClick = (event) => {
     event.stopPropagation();
-    const name = event.object.name;
-    if (!doorRefs.current[name]) return;
-    setDoorStates((prev) => ({ ...prev, [name]: { ...prev[name], isOpen: !prev[name].isOpen } }));
+    const key = event.object.userData.doorKey;
+    if (!key || !doorRefs.current[key]) return;
+    setDoorStates((prev) => ({ ...prev, [key]: { ...prev[key], isOpen: !prev[key].isOpen } }));
     animationProgressRef.current = 0;
     isAnimatingRef.current = true;
   };
@@ -522,12 +544,15 @@ function Road({ visible, speedMph }) {
           />
         </mesh>
       ))}
-      {/* The road surface itself: the app draws no sky, just a ground plane
-          fading out at the horizon. */}
-      <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
-        <planeGeometry args={[26, ROAD_LENGTH]} />
-        <meshBasicMaterial color={ROAD_SURFACE} />
-      </mesh>
+      {/* The road surface. Transparent by default so only the lane markings
+          show, floating on the screen background; ROAD_SURFACE_OPACITY dials a
+          grey road back in. */}
+      {ROAD_SURFACE_OPACITY > 0 && (
+        <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
+          <planeGeometry args={[26, ROAD_LENGTH]} />
+          <meshBasicMaterial color={ROAD_SURFACE} transparent opacity={ROAD_SURFACE_OPACITY} />
+        </mesh>
+      )}
     </group>
   );
 }
@@ -549,7 +574,7 @@ function SceneProbe() {
  * Deliberately not drei's <Environment>: this never suspends, so a slow or
  * missing image degrades to flat lighting instead of blanking the whole scene.
  */
-function SceneRig({ environment, exposure }) {
+function SceneRig({ environment, exposure, ambient }) {
   const { scene, gl } = useThree();
 
   // Reflections: loaded once, shared by every backdrop.
@@ -610,6 +635,13 @@ function SceneRig({ environment, exposure }) {
     gl.toneMappingExposure = exposure;
   }, [gl, exposure]);
 
+  // Reflection strength, from the Ambient slider. The car's paint reads almost
+  // entirely as reflected environment, so this - not the fill light - is what
+  // makes it look bright or dim. Ambient runs 0..8; 5 lands a touch above 1x.
+  useEffect(() => {
+    scene.environmentIntensity = ambient / 4.2;
+  }, [scene, ambient]);
+
   return null;
 }
 
@@ -627,44 +659,44 @@ function ControlledOrbitControls({ driving }) {
 
   useEffect(() => {
     if (!controlsRef.current) return undefined;
-    /* Parked, the camera looks at the middle of the car. Driving, it sits
-       directly behind and drops its aim down the road so the lane lines run to
-       a vanishing point, which is what the Autopilot view shows. */
-    controlsRef.current.target.set(0, driving ? 1.0 : 0.6, driving ? -6 : 0);
-    controlsRef.current.update();
-
     const controls = controlsRef.current;
+
+    /* Place the camera outright for both modes. OrbitControls preserves whatever
+       radius it currently has, so setting only the azimuth (as this used to) left
+       the parked view stuck at the driving radius after a D -> P switch - the car
+       appeared zoomed out. Positioning from a Spherical each time resets it. */
+    if (driving) {
+      // Behind the car, a little above, aimed a short way down the road so the
+      // car sits high in frame with the lane lines running to a vanishing point.
+      controls.target.set(0, 0.9, -2.6);
+      const dist = 9;
+      const polar = Math.PI / 2 - 0.34; // slight downward tilt
+      const azimuth = 0;                 // dead behind a car whose nose is -Z
+      const off = new THREE.Vector3().setFromSpherical(new THREE.Spherical(dist, polar, azimuth));
+      camera.position.copy(controls.target).add(off);
+    } else {
+      // Parked: front three-quarter, centred on the middle of the car.
+      controls.target.set(0, 0.6, 0);
+      const dist = 6.2;
+      const polar = Math.PI / 2 - Math.PI / 5.14;
+      const off = new THREE.Vector3().setFromSpherical(new THREE.Spherical(dist, polar, defaultRotation));
+      camera.position.copy(controls.target).add(off);
+    }
+    controls.update();
+
     const onStart = () => setIsInteracting(true);
     const onEnd = () => {
       setIsInteracting(false);
       setSpring({ rotation: defaultRotation });
     };
-
     controls.addEventListener('start', onStart);
     controls.addEventListener('end', onEnd);
-    // Azimuth 0 puts the camera on +Z, i.e. squarely behind a car whose nose
-    // points -Z.
-    if (driving) {
-      /* Behind the car and a little above it, aimed down the road. Set the
-         position outright: OrbitControls keeps whatever radius it already has,
-         so the Canvas' camera prop cannot move it once mounted. */
-      const elev = 0.30;
-      const dist = 11;
-      camera.position.set(
-        0,
-        controls.target.y + dist * Math.sin(elev),
-        controls.target.z + dist * Math.cos(elev)
-      );
-    } else {
-      controls.setAzimuthalAngle(defaultRotation);
-    }
-    controls.update();
 
     return () => {
       controls.removeEventListener('start', onStart);
       controls.removeEventListener('end', onEnd);
     };
-  }, [defaultRotation, setSpring, driving]);
+  }, [defaultRotation, setSpring, driving, camera]);
 
   useEffect(() => {
     // Driving owns the camera; letting the parked spring run would snap the
@@ -684,8 +716,8 @@ function ControlledOrbitControls({ driving }) {
         enableZoom={false}
         enablePan={false}
         enableRotate={!driving}
-        minPolarAngle={driving ? Math.PI / 2 - 0.30 : Math.PI / 2 - Math.PI / 5.14}
-        maxPolarAngle={driving ? Math.PI / 2 - 0.30 : Math.PI / 2 - Math.PI / 5.14}
+        minPolarAngle={driving ? Math.PI / 2 - 0.34 : Math.PI / 2 - Math.PI / 5.14}
+        maxPolarAngle={driving ? Math.PI / 2 - 0.34 : Math.PI / 2 - Math.PI / 5.14}
       />
     </a.group>
   );
@@ -740,9 +772,9 @@ export function VehicleModel({
           mounts. This loads the studio panorama the tesla-3d-renders pipeline
           settled on for matching the app, straight off our own origin. */}
       <ambientLight intensity={ambient / 10} />
-      <directionalLight position={[3, 5, 4]} intensity={0.9} />
+      <directionalLight position={[3, 5, 4]} intensity={1.4} />
       <SceneProbe />
-      <SceneRig environment={environment} exposure={exposure} />
+      <SceneRig environment={environment} exposure={exposure} ambient={ambient} />
       <Suspense fallback={null}>
         <Road visible={driving} speedMph={speed} />
       </Suspense>

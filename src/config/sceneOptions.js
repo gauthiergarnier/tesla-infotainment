@@ -70,8 +70,8 @@ export const CUBE_FACES = ['posx', 'negx', 'posy', 'negy', 'posz', 'negz'];
 export const DEFAULT_SCENE = {
   lights: { head: false, brake: false, reverse: false, turnL: false, turnR: false, hazard: false },
   environment: 'dark',
-  ambient: 3.5,
-  exposure: 1.0,
+  ambient: 5.5,
+  exposure: 1.45,
 };
 
 /**
@@ -92,6 +92,9 @@ export const LANES = [
 ];
 
 export const ROAD_SURFACE = '#9a9da1';
+// The surface plane's opacity. 0 leaves only the lane markings, floating on the
+// screen background - which is what "transparent road" asks for.
+export const ROAD_SURFACE_OPACITY = 0;
 export const LANE_WIDTH = 0.1;
 export const ROAD_LENGTH = 240;
 export const DASH_CYCLE_M = 12.5;

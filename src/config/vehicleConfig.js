@@ -71,13 +71,38 @@ export function colorByKey(key) {
 }
 
 /**
- * Tesla node names for the parts the UI animates. These hold across the whole
- * Ego family, which is why the fleet can share one component.
+ * Which nodes the UI animates, as candidate lists rather than fixed names.
+ *
+ * The node names are not uniform across the fleet - the Model 3 ships `Hood`
+ * and `Trunk`, the Juniper Model Y ships `Hood_Spatial`/`Hood_Cover` and
+ * `Trunk_Spatial`/`Trunk_Cover` with no bare `Hood` at all. Every vehicle does
+ * carry the `*_Spatial` hinge transforms, which are the correct pivot to rotate
+ * anyway - the closure hangs off its hinge rather than turning about the mesh's
+ * own origin - so those come first, with the mesh names as fallbacks.
+ *
+ * `resolvePart` returns the first candidate present in the scene.
  */
 export const PARTS = {
-  frunk: 'Hood',
-  trunk: 'Trunk',
-  doors: ['Door_LF', 'Door_LR', 'Door_RF', 'Door_RR'],
+  frunk: ['Hood_Spatial', 'Hood', 'Hood_Cover', 'Frunk'],
+  trunk: ['Trunk_Spatial', 'Trunk', 'Trunk_Cover'],
+  doors: [
+    ['Door_LF_Spatial', 'Door_LF'],
+    ['Door_LR_Spatial', 'Door_LR'],
+    ['Door_RF_Spatial', 'Door_RF'],
+    ['Door_RR_Spatial', 'Door_RR'],
+  ],
   // The falcon doors on the X are a different node again.
-  falconDoors: ['Door_LR_Falcon', 'Door_RR_Falcon'],
+  falconDoors: [
+    ['Door_LR_Falcon_Spatial', 'Door_LR_Falcon'],
+    ['Door_RR_Falcon_Spatial', 'Door_RR_Falcon'],
+  ],
 };
+
+/** First candidate name that exists in the scene, or null. */
+export function resolvePart(scene, candidates) {
+  for (const name of candidates) {
+    const node = scene.getObjectByName(name);
+    if (node) return node;
+  }
+  return null;
+}
