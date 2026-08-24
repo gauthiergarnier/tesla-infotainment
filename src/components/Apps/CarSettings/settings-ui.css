@@ -14,38 +14,63 @@
  */
 
 .tsPane {
-  --ts-ink: #1f1f1f;
-  --ts-ink-dim: #8a8a8e;
-  --ts-ink-faint: #a9a9ad;
+  /* ------------------------------------------------------------------
+   * Tokens below are the car's own, read out of the MCU2 2026.8.3 image:
+   *   assets/skin-common.conf    colour tokens (night | day | darkday)
+   *   assets/styles-common.conf  metrics and the type scale
+   *   assets/fonts.conf          Universal Sans Text 330/530/630
+   * Pixel values in the firmware are authored for the 1200x1920 centre
+   * display, where the settings panel is 1160 wide. This panel is about
+   * 720 CSS px, so metrics are multiplied by --ts-scale (720/1160) rather
+   * than copied — the proportions are what carry the resemblance.
+   * ------------------------------------------------------------------ */
+  --ts-scale: 0.62;
+
+  /* Text is never pure black in the car: primary is 70% black. */
+  --ts-ink: rgba(0, 0, 0, 0.702);
+  --ts-ink-dim: rgba(0, 0, 0, 0.40);
+  --ts-ink-faint: rgba(0, 0, 0, 0.20);
   --ts-ink-on-accent: #ffffff;
 
   --ts-surface: transparent;
-  --ts-btn-bg: #f0f0f0;
-  --ts-btn-bg-hover: #e6e6e6;
-  --ts-btn-bg-press: #dcdcdc;
-  --ts-btn-border: #c8c8cc;
-  --ts-accent: #2f7bf6;
-  --ts-accent-press: #2a6ddb;
+  /* Square/flat toggle button: an 8% black wash, not a grey fill. */
+  --ts-btn-bg: rgba(0, 0, 0, 0.078);
+  --ts-btn-bg-hover: rgba(0, 0, 0, 0.12);
+  --ts-btn-bg-press: rgba(0, 0, 0, 0.20);
+  --ts-btn-border: transparent;
+  --ts-accent: #3e6be2;
+  --ts-accent-press: #3560cc;
 
-  --ts-track: #d6d6da;
-  --ts-line: #e2e2e6;
+  --ts-track: rgba(0, 0, 0, 0.098);
+  --ts-slider-track: #d6d6d6;
+  --ts-slider-fill: #ffffff;
+  --ts-slider-thumb: #dbdbdb;
+  --ts-line: rgba(0, 0, 0, 0.051);
   --ts-card: #ffffff;
+  --ts-page: #ededef;
 
-  --ts-radius: 6px;
-  --ts-radius-lg: 10px;
+  --ts-radius: calc(10px * var(--ts-scale));
+  --ts-radius-lg: calc(10px * var(--ts-scale));
+  --ts-pill: calc(30px * var(--ts-scale));
   --ts-border: 1px;
 
-  --ts-fs-label: 15px;
-  --ts-fs-control: 15px;
-  --ts-fs-desc: 12.5px;
-  --ts-fs-title: 13px;
+  /* Type scale: Body2 22 for labels and section headers, 16 for helper
+     text. The helper line is floored at 11px so it stays readable on a
+     monitor; everything else is the firmware ratio. */
+  --ts-fs-label: calc(22px * var(--ts-scale));
+  --ts-fs-control: calc(22px * var(--ts-scale));
+  --ts-fs-desc: 11px;
+  --ts-fs-title: calc(22px * var(--ts-scale));
 
-  --ts-row-gap: 26px;
-  --ts-ctl-h: 46px;
-  --ts-tile-h: 84px;
+  --ts-row-gap: calc(40px * var(--ts-scale));
+  --ts-ctl-h: calc(80px * var(--ts-scale));
+  --ts-tile-h: calc(140px * var(--ts-scale));
+  --ts-switch-w: calc(80px * var(--ts-scale));
+  --ts-switch-h: calc(40px * var(--ts-scale));
 
   color: var(--ts-ink);
   font-size: var(--ts-fs-control);
+  letter-spacing: 0;
   display: flex;
   flex-direction: column;
   gap: var(--ts-row-gap);
@@ -55,20 +80,26 @@
 }
 
 body.theme-dark .tsPane {
-  --ts-ink: #ffffff;
-  --ts-ink-dim: #8e8e93;
-  --ts-ink-faint: #6a6a6e;
+  --ts-ink: rgba(255, 255, 255, 0.902);
+  --ts-ink-dim: rgba(255, 255, 255, 0.60);
+  --ts-ink-faint: rgba(255, 255, 255, 0.20);
 
-  --ts-btn-bg: #2c2c2e;
-  --ts-btn-bg-hover: #3a3a3c;
-  --ts-btn-bg-press: #444446;
-  --ts-btn-border: #3a3a3c;
-  --ts-accent: #3e7bfa;
-  --ts-accent-press: #3569d6;
+  --ts-btn-bg: rgba(255, 255, 255, 0.078);
+  --ts-btn-bg-hover: rgba(255, 255, 255, 0.12);
+  --ts-btn-bg-press: rgba(255, 255, 255, 0.20);
+  --ts-btn-border: transparent;
+  /* The square/flat variants keep #3E6BE2 at night; only the S/X pill
+     button darkens to #213F97. */
+  --ts-accent: #3e6be2;
+  --ts-accent-press: #213f97;
 
-  --ts-track: #3a3a3c;
-  --ts-line: #2f2f31;
-  --ts-card: #1c1c1e;
+  --ts-track: rgba(255, 255, 255, 0.098);
+  --ts-slider-track: #212121;
+  --ts-slider-fill: #b1b1b1;
+  --ts-slider-thumb: #1e1e1e;
+  --ts-line: rgba(255, 255, 255, 0.051);
+  --ts-card: #1f1f20;
+  --ts-page: #161616;
 }
 
 /* ------------------------------------------------------------------ layout */
@@ -81,9 +112,8 @@ body.theme-dark .tsPane {
 
 .tsSectionTitle {
   font-size: var(--ts-fs-title);
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0;
   color: var(--ts-ink-dim);
   margin: 4px 0 -2px;
 }
@@ -142,7 +172,7 @@ body.theme-dark .tsPane {
 }
 
 .tsDivider {
-  height: 1px;
+  height: calc(2px * var(--ts-scale));
   background: var(--ts-line);
   border: 0;
   margin: 2px 0;
@@ -219,9 +249,9 @@ body.theme-dark .tsPane {
   appearance: none;
   border: 0;
   padding: 0;
-  width: 52px;
-  height: 30px;
-  border-radius: 15px;
+  width: var(--ts-switch-w);
+  height: var(--ts-switch-h);
+  border-radius: calc(var(--ts-switch-h) / 2);
   background: var(--ts-track);
   position: relative;
   cursor: pointer;
@@ -234,17 +264,17 @@ body.theme-dark .tsPane {
 .tsSwitch::after {
   content: '';
   position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 24px;
-  height: 24px;
+  top: 2px;
+  left: 2px;
+  width: calc(var(--ts-switch-h) - 4px);
+  height: calc(var(--ts-switch-h) - 4px);
   border-radius: 50%;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   transition: transform 160ms ease;
 }
 
-.tsSwitch.on::after { transform: translateX(22px); }
+.tsSwitch.on::after { transform: translateX(calc(var(--ts-switch-w) - var(--ts-switch-h))); }
 
 /* --------------------------------------------------------------- tile grid */
 
@@ -335,12 +365,14 @@ body.theme-dark .tsPane {
   width: 100%;
 }
 
+/* The slider sits straight on the page in the car, not in a card: the
+   groove is #D6D6D6 and the filled part is white, so a white card behind
+   it would swallow the fill. */
 .tsSliderShell {
   flex: 1 1 auto;
-  background: var(--ts-card);
-  border: var(--ts-border) solid var(--ts-btn-border);
-  border-radius: var(--ts-radius-lg);
-  padding: 0 16px;
+  background: transparent;
+  border: 0;
+  padding: 0;
   min-height: var(--ts-ctl-h);
   display: flex;
   align-items: center;
@@ -358,13 +390,13 @@ body.theme-dark .tsPane {
 .tsSlider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 3px;
-  background: var(--ts-track);
+  background: var(--ts-slider-track);
 }
 
 .tsSlider::-moz-range-track {
   height: 6px;
   border-radius: 3px;
-  background: var(--ts-track);
+  background: var(--ts-slider-track);
 }
 
 /* Filled portion: painted with a gradient stop driven by --ts-fill, because a
@@ -372,36 +404,36 @@ body.theme-dark .tsPane {
 .tsSlider.tsFilled::-webkit-slider-runnable-track {
   background: linear-gradient(
     to right,
-    var(--ts-accent) 0 var(--ts-fill, 0%),
-    var(--ts-track) var(--ts-fill, 0%) 100%
+    var(--ts-slider-fill) 0 var(--ts-fill, 0%),
+    var(--ts-slider-track) var(--ts-fill, 0%) 100%
   );
 }
 
 .tsSlider.tsFilled::-moz-range-track {
   background: linear-gradient(
     to right,
-    var(--ts-accent) 0 var(--ts-fill, 0%),
-    var(--ts-track) var(--ts-fill, 0%) 100%
+    var(--ts-slider-fill) 0 var(--ts-fill, 0%),
+    var(--ts-slider-track) var(--ts-fill, 0%) 100%
   );
 }
 
 .tsSlider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 22px;
-  height: 22px;
+  width: calc(50px * var(--ts-scale));
+  height: calc(50px * var(--ts-scale));
   border-radius: 50%;
-  background: var(--ts-accent);
-  border: 2px solid #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  margin-top: -8px;
+  background: var(--ts-slider-thumb);
+  border: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+  margin-top: calc((50px * var(--ts-scale) - 6px) / -2);
 }
 
 .tsSlider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: calc(50px * var(--ts-scale));
+  height: calc(50px * var(--ts-scale));
   border-radius: 50%;
-  background: var(--ts-accent);
-  border: 2px solid #ffffff;
+  background: var(--ts-slider-thumb);
+  border: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
@@ -561,3 +593,71 @@ body.theme-dark .tsPane {
   justify-content: center;
   box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
 }
+
+/* ------------------------------------------------------------ Wi-Fi list */
+
+.tsNetList {
+  display: flex;
+  flex-direction: column;
+  border: var(--ts-border) solid var(--ts-btn-border);
+  border-radius: var(--ts-radius);
+  overflow: hidden;
+}
+
+.tsNetRow {
+  appearance: none;
+  font: inherit;
+  font-size: var(--ts-fs-control);
+  color: var(--ts-ink);
+  background: var(--ts-card);
+  border: 0;
+  border-bottom: 1px solid var(--ts-line);
+  padding: 0 16px;
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tsNetRow:last-child { border-bottom: 0; }
+.tsNetRow:hover { background: var(--ts-btn-bg-hover); }
+.tsNetRow.on { background: var(--ts-btn-bg); }
+
+.tsNetName {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tsLockGlyph { font-size: 11px; opacity: 0.55; }
+
+.tsNetRight {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+/* Signal bars: four rules of increasing height, inactive ones left faint. */
+.tsSignal {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 15px;
+}
+
+.tsSignal i {
+  width: 3px;
+  border-radius: 1px;
+  background: var(--ts-track);
+  display: block;
+}
+
+.tsSignal i.on { background: var(--ts-ink); }

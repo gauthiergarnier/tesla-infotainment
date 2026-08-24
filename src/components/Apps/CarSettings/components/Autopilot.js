@@ -21,6 +21,8 @@ export const Autopilot = () => {
   const [emergencyLane, setEmergencyLane] = useSetting('emergencyLaneAvoidance');
   const [fcw, setFcw] = useSetting('forwardCollisionWarning');
   const [obstacleAccel, setObstacleAccel] = useSetting('obstacleAwareAccel');
+  const [aeb, setAeb] = useSetting('emergencyBraking');
+  const [blindSpotCamera, setBlindSpotCamera] = useSetting('blindSpotCamera');
   const [apChime, setApChime] = useSetting('autopilotChime');
   const [greenChime, setGreenChime] = useSetting('greenLightChime');
 
@@ -105,6 +107,21 @@ export const Autopilot = () => {
             onChange={setFcw}
           />
         </Row>
+
+        <SwitchRow
+          label="Automatic Emergency Braking"
+          description="Brakes automatically when a collision with a vehicle, pedestrian or cyclist
+                       is judged imminent."
+          checked={aeb}
+          onChange={setAeb}
+        />
+
+        <SwitchRow
+          label="Blind Spot Camera"
+          description="Shows the camera on the side you are signalling towards."
+          checked={blindSpotCamera}
+          onChange={setBlindSpotCamera}
+        />
 
         <SwitchRow
           label="Obstacle-Aware Acceleration"

@@ -27,7 +27,7 @@ export const Lights = () => {
   const [ambientLights, setAmbientLights] = useSetting('ambientLights');
   const [afterExit, setAfterExit] = useSetting('lightsAfterExit');
   const [autoHighBeam, setAutoHighBeam] = useSetting('autoHighBeam');
-  const [puddle, setPuddle] = useSetting('puddleLights');
+  const [fogLights, setFogLights] = useSetting('fogLights');
 
   const anyOn = Object.values(lights).some(Boolean);
 
@@ -53,18 +53,19 @@ export const Lights = () => {
         />
 
         <SwitchRow
+          label="Fog Lights"
+          description="Front fog lamps, available when the headlights are on."
+          checked={fogLights}
+          onChange={setFogLights}
+        />
+
+        <SwitchRow
           label="Ambient Lights"
           description="Interior accent lighting on the dash and doors."
           checked={ambientLights}
           onChange={setAmbientLights}
         />
 
-        <SwitchRow
-          label="Puddle Lights"
-          description="Lights the ground beside the doors when they are opened."
-          checked={puddle}
-          onChange={setPuddle}
-        />
       </Section>
 
       {/* --- fork addition: lighting rig for the 3D car card --------------- */}

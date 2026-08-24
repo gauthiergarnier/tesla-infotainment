@@ -21,6 +21,7 @@ export const Display = () => {
   const [energy, setEnergy] = useSetting('energyUnits');
   const [timeFormat, setTimeFormat] = useSetting('timeFormat');
   const [cleanScreen, setCleanScreen] = useSetting('cleanScreen');
+  const [textSize, setTextSize] = useSetting('textSize');
 
   return (
     <Pane>
@@ -53,6 +54,19 @@ export const Display = () => {
           checked={brightnessAuto}
           onChange={setBrightnessAuto}
         />
+      </Section>
+
+      <Section title="Text">
+        <Row
+          label="Text Size"
+          description="Applies to lists and settings text, not the driving readouts."
+        >
+          <Segmented
+            options={['Standard', 'Large', 'Largest']}
+            value={textSize}
+            onChange={setTextSize}
+          />
+        </Row>
       </Section>
 
       <Section title="Units">
@@ -107,8 +121,8 @@ export const Display = () => {
 
       <Section title="Maintenance">
         <Row
-          label="Clean Screen"
-          description="Blanks and locks the touchscreen for thirty seconds so it can be wiped."
+          label="Screen Clean Mode"
+          description="Locks the touchscreen so it can be wiped. The car must be in Park."
         >
           <Action
             label={cleanScreen ? 'Cancel' : 'Start'}

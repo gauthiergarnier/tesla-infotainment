@@ -49,10 +49,6 @@ export const CarSettings = ({ isWifiMenuOpen, setIsWifiMenuOpen }) => {
     }
   }, [isWifiMenuOpen, setIsWifiMenuOpen]);
 
-  const getButtonClassName = (button) => {
-    return `button ${button.toLowerCase().replace(/\s+/g, '-')}`;
-  };
-
   const handleWifiClick = () => {
     setActivePanel('Wifi');
   };

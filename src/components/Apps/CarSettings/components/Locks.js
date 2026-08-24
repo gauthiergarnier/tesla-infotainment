@@ -14,7 +14,6 @@ import {
 export const Locks = () => {
   const [walkAway, setWalkAway] = useSetting('walkAwayLock');
   const [unlockOnPark, setUnlockOnPark] = useSetting('unlockOnPark');
-  const [driveAway, setDriveAway] = useSetting('driveAwayLock');
   const [excludeHome, setExcludeHome] = useSetting('excludeHome');
   const [phoneKeyOnly, setPhoneKeyOnly] = useSetting('phoneKeyOnly');
   const [pinToDrive, setPinToDrive] = useSetting('pinToDrive');
@@ -47,12 +46,6 @@ export const Locks = () => {
           description="Unlocks all doors when you shift into Park."
           checked={unlockOnPark}
           onChange={setUnlockOnPark}
-        />
-        <SwitchRow
-          label="Drive-Away Door Lock"
-          description="Locks the doors automatically once the car starts moving."
-          checked={driveAway}
-          onChange={setDriveAway}
         />
       </Section>
 

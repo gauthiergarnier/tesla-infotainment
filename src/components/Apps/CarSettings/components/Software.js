@@ -14,7 +14,7 @@ import {
  */
 export const Software = () => {
   const [preference, setPreference] = useSetting('softwarePreference');
-  const [autoUpdate, setAutoUpdate] = useSetting('autoUpdate');
+  const [dataSharing, setDataSharing] = useSetting('dataSharing');
   const [downloading, setDownloading] = useState(false);
   const [progress, setProgress] = useState(0);
 
@@ -89,10 +89,11 @@ export const Software = () => {
           />
         </Row>
         <SwitchRow
-          label="Install Updates Automatically"
-          description="Installs overnight while parked at a known location."
-          checked={autoUpdate}
-          onChange={setAutoUpdate}
+          label="Data Sharing"
+          description="Shares anonymised analytics, and road-segment video clips, with Tesla to
+                       improve the fleet's driver-assist features."
+          checked={dataSharing}
+          onChange={setDataSharing}
         />
         <ChevronRow label="Additional Vehicle Information" value="View" />
       </Section>

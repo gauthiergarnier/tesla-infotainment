@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSetting } from '../vehicleSettings';
 import {
-  Pane, Section, Row, Segmented, SwitchRow, SliderRow, Stepper, Action, InfoRow,
+  Pane, Section, Row, SwitchRow, SliderRow, Stepper, Action, InfoRow,
 } from './ui/SettingsUI';
 
 /**
@@ -15,6 +15,7 @@ export const Charging = () => {
   const [limit, setLimit] = useSetting('chargeLimit');
   const [current, setCurrent] = useSetting('chargeCurrent');
   const [portUnlock, setPortUnlock] = useSetting('chargePortUnlock');
+  const [chargeOnSolar, setChargeOnSolar] = useSetting('chargeOnSolar');
   const [scheduled, setScheduled] = useSetting('scheduledCharging');
   const [departure, setDeparture] = useSetting('scheduledDeparture');
 
@@ -72,6 +73,15 @@ export const Charging = () => {
                        the cabin just before you leave."
           checked={departure}
           onChange={(v) => { setDeparture(v); if (v) setScheduled(false); }}
+        />
+      </Section>
+
+      <Section title="Solar">
+        <SwitchRow
+          label="Charge on Solar"
+          description="Charges only from surplus solar generation reported by your Powerwall."
+          checked={chargeOnSolar}
+          onChange={setChargeOnSolar}
         />
       </Section>
 

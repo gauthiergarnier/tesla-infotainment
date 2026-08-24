@@ -16,7 +16,7 @@ export const Safety = () => {
   const [offset, setOffset] = useSetting('speedLimitOffset');
   const [lockSound, setLockSound] = useSetting('lockConfirmSound');
   const [parkChimes, setParkChimes] = useSetting('parkAssistChimes');
-  const [cabinCamera, setCabinCamera] = useSetting('cabinCameraAnalytics');
+  const [securityAlarm, setSecurityAlarm] = useSetting('securityAlarm');
   const [overheat, setOverheat] = useSetting('cabinOverheatProtection');
   const [joeMode, setJoeMode] = useSetting('joeMode');
 
@@ -80,11 +80,10 @@ export const Safety = () => {
           />
         </Row>
         <SwitchRow
-          label="Cabin Camera Analytics"
-          description="Shares camera data after an accident to improve driver-assist features.
-                       Footage never leaves the car unless you allow it."
-          checked={cabinCamera}
-          onChange={setCabinCamera}
+          label="Security Alarm"
+          description="Sounds the alarm if the car detects an intrusion while it is locked."
+          checked={securityAlarm}
+          onChange={setSecurityAlarm}
         />
       </Section>
 

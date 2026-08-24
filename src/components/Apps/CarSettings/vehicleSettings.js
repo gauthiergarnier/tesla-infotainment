@@ -43,6 +43,7 @@ const defaults = {
   chargeLimit: 80,
   chargeCurrent: 32,
   chargePortUnlock: true,
+  chargeOnSolar: false,
   scheduledCharging: false,
   scheduledDeparture: false,
 
@@ -52,6 +53,8 @@ const defaults = {
   emergencyLaneAvoidance: true,
   forwardCollisionWarning: 'Medium',
   obstacleAwareAccel: false,
+  emergencyBraking: true,
+  blindSpotCamera: true,
   autopilotChime: true,
   greenLightChime: false,
   followDistance: 4,
@@ -62,7 +65,6 @@ const defaults = {
   // Locks
   walkAwayLock: true,
   unlockOnPark: false,
-  driveAwayLock: true,
   excludeHome: false,
   phoneKeyOnly: false,
   pinToDrive: false,
@@ -72,7 +74,7 @@ const defaults = {
   ambientLights: true,
   lightsAfterExit: 'On',
   autoHighBeam: true,
-  puddleLights: true,
+  fogLights: false,
 
   // Display
   displayTheme: 'Auto',
@@ -84,23 +86,24 @@ const defaults = {
   energyUnits: 'Wh/mi',
   timeFormat: '12h',
   cleanScreen: false,
+  textSize: 'Standard',
 
   // Navigation
   navAvoidTolls: false,
   navAvoidFerries: true,
   navOnlineRouting: true,
-  navTrafficVisualization: true,
-  navSatellite: false,
   navAutoNavigate: false,
-  navMinimizeDrive: true,
   navTripPlanner: true,
+  navAvoidHighways: false,
+  navUseHov: false,
+  navVolume: 6,
 
   // Safety
   speedLimitWarning: 'Chime',
   speedLimitOffset: 5,
   lockConfirmSound: true,
   parkAssistChimes: true,
-  cabinCameraAnalytics: false,
+  securityAlarm: true,
   cabinOverheatProtection: 'On',
   joeMode: false,
 
@@ -112,12 +115,11 @@ const defaults = {
 
   // Software
   softwarePreference: 'Standard',
-  autoUpdate: true,
+  dataSharing: false,
 
   // Wifi
   wifiEnabled: true,
   wifiNetwork: 'Home 5G',
-  hotspotEnabled: false,
 };
 
 let state = { ...defaults };

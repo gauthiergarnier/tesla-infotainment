@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSetting } from '../vehicleSettings';
 import {
-  Pane, Section, Row, Segmented, SwitchRow, ChevronRow, InfoRow, Action,
+  Pane, Section, Row, SwitchRow, SliderRow, ChevronRow, InfoRow, Action,
 } from './ui/SettingsUI';
 
 /**
@@ -15,11 +15,11 @@ export const Navigation = () => {
   const [avoidTolls, setAvoidTolls] = useSetting('navAvoidTolls');
   const [avoidFerries, setAvoidFerries] = useSetting('navAvoidFerries');
   const [onlineRouting, setOnlineRouting] = useSetting('navOnlineRouting');
-  const [traffic, setTraffic] = useSetting('navTrafficVisualization');
-  const [satellite, setSatellite] = useSetting('navSatellite');
   const [autoNavigate, setAutoNavigate] = useSetting('navAutoNavigate');
-  const [minimize, setMinimize] = useSetting('navMinimizeDrive');
   const [tripPlanner, setTripPlanner] = useSetting('navTripPlanner');
+  const [avoidHighways, setAvoidHighways] = useSetting('navAvoidHighways');
+  const [useHov, setUseHov] = useSetting('navUseHov');
+  const [navVolume, setNavVolume] = useSetting('navVolume');
 
   return (
     <Pane>
@@ -41,19 +41,17 @@ export const Navigation = () => {
           checked={avoidFerries}
           onChange={setAvoidFerries}
         />
-        <Row
-          label="Optimize Route For"
-          description="Trip planning balances driving time against time spent charging."
-        >
-          <Segmented
-            options={[
-              { value: true, label: 'Drive Time' },
-              { value: false, label: 'Charge Time' },
-            ]}
-            value={minimize}
-            onChange={setMinimize}
-          />
-        </Row>
+        <SwitchRow
+          label="Avoid Highways"
+          checked={avoidHighways}
+          onChange={setAvoidHighways}
+        />
+        <SwitchRow
+          label="Use HOV Lanes"
+          description="Routes through carpool lanes where your vehicle is eligible."
+          checked={useHov}
+          onChange={setUseHov}
+        />
       </Section>
 
       <Section title="Trip Planner">
@@ -74,18 +72,15 @@ export const Navigation = () => {
       </Section>
 
       <Section title="Map">
-        <SwitchRow
-          label="Traffic Visualization"
-          description="Colours roads by current traffic speed."
-          checked={traffic}
-          onChange={setTraffic}
-        />
-        <SwitchRow
-          label="Satellite Maps"
-          description="Uses aerial imagery under the road layer. Requires connectivity."
-          checked={satellite}
-          onChange={setSatellite}
-        />
+        <Row label="Navigation Volume" stack>
+          <SliderRow
+            value={navVolume}
+            min={0}
+            max={10}
+            onChange={setNavVolume}
+            format={(v) => `${v}`}
+          />
+        </Row>
         <ChevronRow label="Home Address" value="Set" />
         <ChevronRow label="Work Address" value="Not set" />
       </Section>
