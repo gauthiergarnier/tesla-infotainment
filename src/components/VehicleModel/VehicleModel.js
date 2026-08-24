@@ -5,6 +5,8 @@ import * as THREE from 'three';
 import { useSpring, a } from '@react-spring/three';
 import { getCarModelPath } from '../../utils/assetPaths';
 import { useScene } from '../../contexts/SceneContext';
+import { WrapLayer } from '../../utils/wrapLayer';
+import { usePaint, finishFor, TRIMS } from '../../utils/paintStore';
 import {
   LIGHT_COLORS,
   classifyLight,
@@ -242,9 +244,11 @@ const isDarkTheme = () =>
  * lift restores the punch the app gets from its own coloured surroundings.
  * Greys are left alone.
  */
-function applyPaint(root, color) {
+function applyPaint(root, color, paintType = 'Metallic') {
+  const finish = finishFor(color, paintType);
   root.traverse((o) => {
-    if (!o.isMesh) return;
+    // A wrap overlay is vinyl, not paint: leave its material alone.
+    if (!o.isMesh || o.userData.wrapOverlay) return;
     const mats = Array.isArray(o.material) ? o.material : [o.material];
     for (const m of mats) {
       if (!isPaint(m)) continue;
@@ -258,9 +262,29 @@ function applyPaint(root, color) {
           THREE.LinearSRGBColorSpace
         );
       }
-      m.metalness = color.metallic;
+      m.metalness = finish.metalness;
       // The "Rough" variant is the app's matte/underside pass - keep it dull.
-      m.roughness = /rough/i.test(m.name) ? Math.max(0.6, color.roughness) : color.roughness;
+      m.roughness = /rough/i.test(m.name) ? Math.max(0.6, finish.roughness) : finish.roughness;
+      m.needsUpdate = true;
+    }
+  });
+}
+
+/**
+ * Window surrounds and mirror caps. Tesla's "chrome delete" is a real trim
+ * option on the car's own paint override, and the models carry the parts as
+ * their own `Trim*` materials, so it is a material tweak rather than geometry.
+ */
+function applyTrim(root, trimKey) {
+  const t = TRIMS[trimKey] || TRIMS.Chrome;
+  root.traverse((o) => {
+    if (!o.isMesh || o.userData.wrapOverlay) return;
+    const mats = Array.isArray(o.material) ? o.material : [o.material];
+    for (const m of mats) {
+      if (!m || !/^trim/i.test(m.name || '')) continue;
+      m.color.setHex(t.color);
+      m.metalness = t.metalness;
+      m.roughness = t.roughness;
       m.needsUpdate = true;
     }
   });
@@ -342,6 +366,9 @@ function mountWheels(body, vehicle, wheelProto) {
 }
 
 function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, wheelKey, lights, driving, speedMph, ...props }) {
+  const paint = usePaint();
+  const wrapRef = useRef(null);
+  if (!wrapRef.current) wrapRef.current = new WrapLayer(process.env.PUBLIC_URL || '');
   const vehicle = VEHICLES[vehicleId] || VEHICLES[DEFAULT_VEHICLE];
   const wheelDef = WHEELS[wheelKey] || WHEELS[vehicle.default_wheel];
 
@@ -389,9 +416,20 @@ function Model({ rotateToFrunk, rotateToTrunk, activeGear, vehicleId, colorKey, 
     lastPhaseRef.current = true;
   }, [scene, lights]);
 
+  /* Paint, finish and trim all come from the Colorizer store; colorKey is the
+     prop fallback for the URL-driven default. */
   useLayoutEffect(() => {
-    applyPaint(scene, colorByKey(colorKey));
-  }, [scene, colorKey]);
+    applyPaint(scene, colorByKey(paint.colorKey || colorKey), paint.paintType);
+    applyTrim(scene, paint.trim);
+  }, [scene, colorKey, paint.colorKey, paint.paintType, paint.trim]);
+
+  /* The wrap is a vinyl layer over the paint, rebuilt whenever the chosen wrap
+     or the underlying scene changes. */
+  useEffect(() => {
+    const layer = wrapRef.current;
+    layer.apply(scene, paint.wrap);
+    return () => layer.clear();
+  }, [scene, paint.wrap]);
 
   /* Recentre once the scene is final. drei's <Center> measures on mount, but
      the wheels are attached and the FX meshes hidden in the effects above, so

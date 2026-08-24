@@ -1,0 +1,124 @@
+/*
+ * Colorizer — swatch grid and wrap picker.
+ *
+ * Sits inside a .tsPane, so it inherits the settings tokens rather than
+ * defining its own colours.
+ */
+
+.czSwatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(44px, 1fr));
+  gap: 10px;
+}
+
+.czSwatch {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  border-radius: 50%;
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+body.theme-dark .czSwatch { border-color: rgba(255, 255, 255, 0.22); }
+
+.czSwatch:hover { transform: scale(1.08); }
+
+/* Selected swatch gets a ring in the car's blue, held off the colour itself so
+   dark paints stay readable. */
+.czSwatch.on {
+  box-shadow: 0 0 0 2px var(--ts-card), 0 0 0 4px var(--ts-accent);
+}
+
+.czActiveName {
+  font-size: var(--ts-fs-label);
+  color: var(--ts-ink-dim);
+  margin-top: 2px;
+}
+
+/* ------------------------------------------------------------------ wraps */
+
+.czWraps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 12px;
+}
+
+.czWrapCell {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.czWrap {
+  appearance: none;
+  font: inherit;
+  font-size: var(--ts-fs-desc);
+  color: var(--ts-ink);
+  background: var(--ts-btn-bg);
+  border: 1px solid transparent;
+  border-radius: var(--ts-radius);
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 120ms ease;
+}
+
+.czWrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.czWrap:hover { border-color: var(--ts-btn-border); }
+
+.czWrap.on {
+  border-color: var(--ts-accent);
+  box-shadow: 0 0 0 1px var(--ts-accent);
+}
+
+.czNone {
+  color: var(--ts-ink-dim);
+}
+
+.czWrapName {
+  font-size: 10px;
+  color: var(--ts-ink-dim);
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Delete affordance for uploads only. */
+.czRemove {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(0, 0, 0, 0.65);
+  color: #fff;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.czFile {
+  display: none;
+}

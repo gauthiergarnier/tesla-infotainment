@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSetting } from '../vehicleSettings';
+import { Colorizer } from './Colorizer';
 import {
   Pane, Section, Row, Segmented, SwitchRow, InfoRow, Action, Meter, ChevronRow,
 } from './ui/SettingsUI';
@@ -41,6 +42,8 @@ export const Software = () => {
         <InfoRow label="VIN" value="7SAYGDEE8PF000000" />
         <InfoRow label="Odometer" value="24,918 mi" />
       </Section>
+
+      <Colorizer />
 
       <Section
         title="Update"

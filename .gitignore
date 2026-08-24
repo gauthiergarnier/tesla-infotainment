@@ -41,3 +41,7 @@ package-lock.json
 
 # Demo stills / screen recordings for the browser app's "Demo screens" mode.
 public/demo/
+
+# Paint Shop wrap catalogue (~108MB of PNGs extracted from the car's own app
+# pack). Repopulate with scripts/import-wraps.sh rather than committing them.
+public/wraps/
