@@ -10,9 +10,9 @@
  *  2. MONO_FIRMWARE - monochrome glyphs from /usr/tesla/UI/assets. Tesla's own
  *     apps (camera, dashcam, toybox...) and the car-feature toggles (wipers,
  *     defrost, seats, fan) are monochrome in the firmware - the coloured phone
- *     / bluetooth tiles on the real dash are drawn by QtCar, not shipped as
- *     files - so unifying on firmware means these are monochrome, tinted to
- *     suit the surface they sit on.
+ *     / bluetooth tiles on the real dash are drawn by QtCar, not shipped
+ *     as files - so ONLY the basic car functions and the launcher grid are
+ *     monochrome. Every actual app stays in colour.
  *
  * Anything not listed falls through to the project's own `app-*.svg`.
  *
@@ -29,23 +29,10 @@ export const COLORED_FIRMWARE = {
   'youtube-music': 'apps/youtube-music.png',
 };
 
-// Tier 2: monochrome firmware glyphs.
+// Tier 2: monochrome firmware glyphs - ONLY basic car functions and the
+// launcher control. Apps are never monochrome; they stay in colour (tier 1 for
+// the streaming brands, the project's colour app-*.svg for the rest).
 export const MONO_FIRMWARE = {
-  // Tesla apps (ui-styled-dom/icons)
-  camera: 'camera_icon.png',
-  bluetooth: 'bluetooth_icon.png',
-  dashcam: 'dashcam_icon.png',
-  toybox: 'toybox_icon.png',
-  arcade: 'arcade_icon.png',
-  nav: 'nav_icon.png',
-  phone: 'phone_icon.png',
-  messages: 'message_icon.png',
-  manual: 'manual_icon.png',
-  caraoke: 'caraoke_icon.png',
-  radio: 'radio_icon.png',
-  theater: 'entertainment_icon.png',
-  energy: 'charging_icon.png',
-
   // Car-feature toggles - single-frame HVAC glyphs (hvac/icons)
   wipers: 'feat/wipers.png',
   'defrost-front': 'feat/defrost-front.png',
