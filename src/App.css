@@ -554,7 +554,10 @@ body.recordMode .small-screen-message {
 .appShelfIcon img.monoIcon {
   aspect-ratio: 1 / 1;
   object-fit: contain;
-  padding: 8%;
+  /* Sized a touch larger than the colour tiles (which are 50%) and with no
+     inset, so the trimmed feature glyphs read at the same visual weight. */
+  width: 62%;
+  padding: 0;
   box-sizing: border-box;
   filter: brightness(0) invert(1);
   opacity: 0.92;
