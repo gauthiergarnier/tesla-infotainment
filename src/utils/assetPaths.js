@@ -1,4 +1,4 @@
-import { teslaIconFile, isMonoIcon } from '../config/teslaIcons';
+import { teslaIconFile, isMonoIcon, isFirmwareIcon } from '../config/teslaIcons';
 
 export function getImagePath(imageName) {
     const baseUrl = process.env.PUBLIC_URL || '';
@@ -26,4 +26,10 @@ export function getAppIconPath(appName) {
 /** True when the tile is a monochrome glyph that must be tinted for its surface. */
 export function isTintedIcon(appName) {
     return isMonoIcon(appName);
+}
+
+/** True for firmware icons - they keep their native padding and get a larger
+ *  container (see the .fwIcon rules) instead of being trimmed. */
+export function isFwIcon(appName) {
+    return isFirmwareIcon(appName);
 }

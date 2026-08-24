@@ -157,12 +157,10 @@
     object-fit: contain;
 }
 
-/* The mono control glyph a hair smaller, and inset, so it does not dominate the
-   colour tiles - it is a button, not an app. */
-.dockApps .navIcons.monoIcon,
-.dockApps .navIcons.shelfGrid {
-    height: 44%;
-}
+/* Firmware icons keep their native padding, so their container is taller to
+   bring the glyph up to the size of the project SVG tiles. */
+.dockApps .navIcons.fwIcon { height: 82%; }
+.dockApps .navIcons.fwIcon:not(.monoIcon) { height: 74%; }
 
 /* The nav bar is always black in both themes. App tiles render in their own
    colour (Spotify green, Apple Music red, the project's colour SVGs); only the

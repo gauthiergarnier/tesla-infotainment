@@ -1,267 +1,193 @@
 import React, { useState, useEffect } from 'react';
 import CarWashMode from './CarWashMode/CarWashMode';
-import '../CarSettings.css'; // Make sure to create and import corresponding CSS
 import { MirrorsAdjustment } from './MirrorsAdjustment';
 import { SteeringAdjustment } from './SteeringAdjustment';
+import { useSetting } from '../vehicleSettings';
+import {
+  Pane, Section, Row, Segmented, ToggleButton,
+  Tiles, TileGroup, Tile, SliderRow,
+} from './ui/SettingsUI';
+import '../CarSettings.css';
 
+/**
+ * Controls — the landing page of the settings screen.
+ *
+ * Unlike every other sub-menu this one is a button board rather than a list of
+ * labelled rows: the car puts the things you reach for while seated (lights,
+ * wipers, mirrors, glovebox) on large targets with no section headings. The
+ * order and grouping below follow the car screen.
+ */
 export const Controls = () => {
-  // Row 1: Light modes and High Beams
-  const [selectedLightMode, setSelectedLightMode] = useState('Auto');
-  const [highBeamsOn, setHighBeamsOn] = useState(false);
+  const [headlights, setHeadlights] = useSetting('headlights');
+  const [highBeams, setHighBeams] = useSetting('highBeams');
+  const [foldMirrors, setFoldMirrors] = useSetting('foldMirrors');
+  const [childLock, setChildLock] = useSetting('childLock');
+  const [windowLock, setWindowLock] = useSetting('windowLock');
+  const [wipers, setWipers] = useSetting('wipers');
+  const [wiperSpeed, setWiperSpeed] = useSetting('wiperSpeed');
+  const [dashcam, setDashcam] = useSetting('dashcam');
+  const [sentry, setSentry] = useSetting('sentry');
+  const [brightness, setBrightness] = useSetting('brightness');
+  const [brightnessAuto, setBrightnessAuto] = useSetting('brightnessAuto');
 
-  // Row 2: Fold Mirrors, Child Lock, Window Lock
-  const [foldMirrorsOn, setFoldMirrorsOn] = useState(false);
-  const [windowLockOn, setWindowLockOn] = useState(false);
-  const [childLockOption, setChildLockOption] = useState('Off'); // 'Left', 'Right', 'Both'
-  const [showChildLockPopup, setShowChildLockPopup] = useState(false);
+  const [showChildLock, setShowChildLock] = useState(false);
+  const [showCarWash, setShowCarWash] = useState(false);
+  const [showMirrors, setShowMirrors] = useState(false);
+  const [showSteering, setShowSteering] = useState(false);
+  const [gloveboxOpen, setGloveboxOpen] = useState(false);
 
-  // Row 3: Wipers mode and speed
-  const [wipersMode, setWipersMode] = useState('Auto');
-  const [wiperSpeed, setWiperSpeed] = useState(null);
-
-  // Function to handle wiper mode change
-  const handleWiperModeChange = (mode) => {
-    setWipersMode(mode);
-    if (mode === 'Auto') {
-      setWiperSpeed(null);
-    }
+  // Wipers: picking a speed implies the manual mode, and Auto/Off clear it.
+  const setWiperMode = (mode) => {
+    setWipers(mode);
+    if (mode !== 'On') setWiperSpeed(null);
   };
 
-  // Function to handle wiper speed change
-  const handleWiperSpeedChange = (speed) => {
+  const pickWiperSpeed = (speed) => {
     setWiperSpeed(speed);
-    setWipersMode('On');
+    setWipers('On');
   };
 
-  // Row 4: Various controls
-  const [mirrorsOn, setMirrorsOn] = useState(false);
-  const [steeringOn, setSteeringOn] = useState(false);
-  const [dashcamOn, setDashcamOn] = useState(false);
-  const [sentryModeOn, setSentryModeOn] = useState(false);
-  const [showCarWashMode, setShowCarWashMode] = useState(false);
-  const [gloveBoxClicked, setGloveBoxClicked] = useState(false);
-
-  // Row 5: Brightness control
-  const [brightness, setBrightness] = useState(100);
-  const [autoBrightnessOn, setAutoBrightnessOn] = useState(false);
-
-  // Adjust display brightness
+  // The brightness slider dims the simulated screen itself, the way it does in
+  // the car — kept from the original implementation.
   useEffect(() => {
-    const displayWrapper = document.querySelector('.displayWrapper');
-    if (displayWrapper) {
-      if (autoBrightnessOn) {
-        displayWrapper.style.opacity = '1';
-      } else {
-        const opacity = Math.max(0.1, brightness / 100);
-        displayWrapper.style.opacity = opacity.toString();
-      }
-    }
-  }, [brightness, autoBrightnessOn]);
+    const wrapper = document.querySelector('.displayWrapper');
+    if (!wrapper) return;
+    wrapper.style.opacity = brightnessAuto
+      ? '1'
+      : String(Math.max(0.1, brightness / 100));
+  }, [brightness, brightnessAuto]);
 
-  // Glovebox click effect
+  // The glovebox button is momentary: it lights up, then releases.
   useEffect(() => {
-    if (gloveBoxClicked) {
-      const timer = setTimeout(() => {
-        setGloveBoxClicked(false);
-      }, 500); // Highlight for 500ms
-      return () => clearTimeout(timer);
-    }
-  }, [gloveBoxClicked]);
-
-  const [showMirrorsModal, setShowMirrorsModal] = useState(false);
-  const [showSteeringModal, setShowSteeringModal] = useState(false);
-
-  const openMirrorsModal = () => setShowMirrorsModal(true);
-  const closeMirrorsModal = () => setShowMirrorsModal(false);
-  const openSteeringModal = () => setShowSteeringModal(true);
-  const closeSteeringModal = () => setShowSteeringModal(false);
+    if (!gloveboxOpen) return undefined;
+    const timer = setTimeout(() => setGloveboxOpen(false), 600);
+    return () => clearTimeout(timer);
+  }, [gloveboxOpen]);
 
   return (
-    <div className="buttons-container">
-      {/* Row 1 */}
-      <div className="flex-row row-1">
-        {['Off', 'Parking', 'On', 'Auto'].map((mode) => (
-          <div
-            key={mode}
-            className={`btn ${selectedLightMode === mode ? 'active' : ''}`}
-            onClick={() => setSelectedLightMode(mode)}
-          >
-            {mode}
+    <Pane className="tsControls">
+      {/* Headlights, with High Beams detached to its own target. */}
+      <Section>
+        <Row stack>
+          <div className="tsHeadlightRow">
+            <Segmented
+              options={['Off', 'Parking', 'On', 'Auto']}
+              value={headlights}
+              onChange={setHeadlights}
+              fill
+            />
+            <ToggleButton
+              label="High Beams"
+              active={highBeams}
+              onClick={() => setHighBeams(!highBeams)}
+              detached
+            />
           </div>
-        ))}
-        <div
-          className={`btn auto-high-beams-btn ${highBeamsOn ? 'active' : ''}`}
-          onClick={() => setHighBeamsOn(!highBeamsOn)}
-        >
-          High Beams
-        </div>
-      </div>
+        </Row>
+      </Section>
 
-      <div className="gap-row"></div>
-
-      {/* Row 2 */}
-      <div className="flex-row row-2">
-        <div
-          className={`btn ${foldMirrorsOn ? 'active' : ''}`}
-          onClick={() => setFoldMirrorsOn(!foldMirrorsOn)}
-        >
-          Fold Mirrors
-        </div>
-        <div
-          className={`btn ${childLockOption !== 'Off' ? 'active' : ''}`}
-          onClick={() => setShowChildLockPopup(!showChildLockPopup)}
-        >
-          Child Lock
-          {childLockOption !== 'Off' && <span className="subtext">{childLockOption}</span>}
-        </div>
-        <div
-          className={`btn ${windowLockOn ? 'active' : ''}`}
-          onClick={() => setWindowLockOn(!windowLockOn)}
-        >
-          Window Lock
-        </div>
-      </div>
-
-      {/* Child Lock Popup */}
-      {showChildLockPopup && (
-        <div className="child-lock-popup">
-          {['Off', 'Left', 'Right', 'Both'].map((option) => (
-            <div
-              key={option}
-              className={`btn ${childLockOption === option ? 'active' : ''}`}
-              onClick={() => {
-                setChildLockOption(option);
-                setShowChildLockPopup(false);
-              }}
-            >
-              {option}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="gap-row"></div>
-
-      {/* Row 3 */}
-      <div className="flex-row row-3">
-        <div
-          className={`btn ${wipersMode === 'Off' ? 'active' : ''}`}
-          onClick={() => handleWiperModeChange('Off')}
-        >
-          Off
-        </div>
-        <div
-          className={`btn ${wipersMode === 'Auto' ? 'active' : ''}`}
-          onClick={() => handleWiperModeChange('Auto')}
-        >
-          Auto
-        </div>
-        {['I', 'II', 'III', 'IIII'].map((speed) => (
-          <div
-            key={speed}
-            className={`btn ${wipersMode === 'On' && wiperSpeed === speed ? 'active' : ''}`}
-            onClick={() => handleWiperSpeedChange(speed)}
-          >
-            {speed}
-          </div>
-        ))}
-      </div>
-
-      <div className="gap-row"></div>
-
-      {/* Row 4 */}
-      <div className="flex-row row-4">
-        <div className="flex-column">
-          <div
-            className="btn"
-            onClick={openMirrorsModal}
-          >
-            Mirrors
-          </div>
-          <div
-            className="btn"
-            onClick={openSteeringModal}
-          >
-            Steering
-          </div>
-        </div>
-        <div className="gap-column"></div>
-        <div className="flex-column">
-          <div
-            className={`btn ${dashcamOn ? 'active' : ''}`}
-            onClick={() => setDashcamOn(!dashcamOn)}
-          >
-            Dashcam
-          </div>
-          <div
-            className={`btn ${sentryModeOn ? 'active' : ''}`}
-            onClick={() => setSentryModeOn(!sentryModeOn)}
-          >
-            Sentry
-            {sentryModeOn && <span className="red-dot"></span>}
-          </div>
-        </div>
-        <div className="gap-column"></div>
-        <div className="flex-column">
-          <div
-            className="btn"
-            onClick={() => setShowCarWashMode(true)}
-          >
-            Car Wash
-          </div>
-          <div
-            className={`btn ${gloveBoxClicked ? 'active' : ''}`}
-            onClick={() => setGloveBoxClicked(true)}
-          >
-            Glovebox
-          </div>
-        </div>
-      </div>
-
-      {/* Car Wash Mode Panel */}
-      {showCarWashMode && (
-        <div className="car-wash-mode-popup">
-          <CarWashMode onClose={() => setShowCarWashMode(false)} />
-        </div>
-      )}
-
-      <div className="gap-row"></div>
-
-      {/* Row 5 */}
-      <div className="flex-row row-5">
-        <div className="brightness-slider">
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={brightness}
-            onChange={(e) => setBrightness(e.target.value)}
-            disabled={autoBrightnessOn}
+      {/* Mirrors / child lock / window lock. */}
+      <Section>
+        <Tiles columns={3}>
+          <Tile
+            label="Fold Mirrors"
+            active={foldMirrors}
+            onClick={() => setFoldMirrors(!foldMirrors)}
           />
-        </div>
-        <div
-          className={`btn brightness-auto-btn ${autoBrightnessOn ? 'active' : ''}`}
-          onClick={() => {
-            setAutoBrightnessOn(!autoBrightnessOn);
-            if (!autoBrightnessOn) {
-              setBrightness(100);
-            }
-          }}
-        >
-          Auto
-        </div>
-      </div>
+          <Tile
+            label="Child Lock"
+            sub={childLock !== 'Off' ? childLock : undefined}
+            active={childLock !== 'Off'}
+            onClick={() => setShowChildLock((v) => !v)}
+          />
+          <Tile
+            label="Window Lock"
+            active={windowLock}
+            onClick={() => setWindowLock(!windowLock)}
+          />
+        </Tiles>
 
-      {showMirrorsModal && (
-        <div className="modal">
-          <MirrorsAdjustment onClose={closeMirrorsModal} />
+        {showChildLock && (
+          <div className="child-lock-popup">
+            <Segmented
+              options={['Off', 'Left', 'Right', 'Both']}
+              value={childLock}
+              onChange={(v) => {
+                setChildLock(v);
+                setShowChildLock(false);
+              }}
+            />
+          </div>
+        )}
+      </Section>
+
+      {/* Wipers: mode and the four manual speeds in one connected group. */}
+      <Section>
+        <Segmented
+          fill
+          value={wipers === 'On' ? wiperSpeed : wipers}
+          onChange={(v) => (['Off', 'Auto'].includes(v) ? setWiperMode(v) : pickWiperSpeed(v))}
+          options={['Off', 'Auto', 'I', 'II', 'III', 'IIII']}
+        />
+      </Section>
+
+      {/* Six tiles in three vertically-joined pairs. */}
+      <Section>
+        <Tiles columns={3}>
+          <TileGroup>
+            <Tile label="Mirrors" onClick={() => setShowMirrors(true)} />
+            <Tile label="Steering" onClick={() => setShowSteering(true)} />
+          </TileGroup>
+          <TileGroup>
+            <Tile label="Dashcam" active={dashcam} onClick={() => setDashcam(!dashcam)} />
+            <Tile label="Sentry" active={sentry} dot={sentry} onClick={() => setSentry(!sentry)} />
+          </TileGroup>
+          <TileGroup>
+            <Tile label="Car Wash" onClick={() => setShowCarWash(true)} />
+            <Tile label="Glovebox" active={gloveboxOpen} onClick={() => setGloveboxOpen(true)} />
+          </TileGroup>
+        </Tiles>
+      </Section>
+
+      {/* Screen brightness. */}
+      <Section>
+        <SliderRow
+          value={brightness}
+          min={0}
+          max={100}
+          disabled={brightnessAuto}
+          onChange={setBrightness}
+          trailing={(
+            <ToggleButton
+              label="Auto"
+              active={brightnessAuto}
+              onClick={() => {
+                const next = !brightnessAuto;
+                setBrightnessAuto(next);
+                if (next) setBrightness(100);
+              }}
+            />
+          )}
+        />
+      </Section>
+
+      {showCarWash && (
+        <div className="car-wash-mode-popup">
+          <CarWashMode onClose={() => setShowCarWash(false)} />
         </div>
       )}
-      {showSteeringModal && (
+      {showMirrors && (
         <div className="modal">
-          <SteeringAdjustment onClose={closeSteeringModal} />
+          <MirrorsAdjustment onClose={() => setShowMirrors(false)} />
         </div>
       )}
-    </div>
+      {showSteering && (
+        <div className="modal">
+          <SteeringAdjustment onClose={() => setShowSteering(false)} />
+        </div>
+      )}
+    </Pane>
   );
 };
+
+export default Controls;

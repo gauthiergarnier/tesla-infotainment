@@ -1,7 +1,7 @@
 import React from 'react';
 import TemperatureControl from '../TemperatureControl/TemperatureControl';
 import VolumeControl from '../VolumeControl/VolumeControl';
-import { getImagePath, getAppIconPath, isTintedIcon } from '../../utils/assetPaths';
+import { getImagePath, getAppIconPath, isTintedIcon, isFwIcon } from '../../utils/assetPaths';
 import './BtmNavBar.css';
 
 const BtmNavBar = ({ 
@@ -73,7 +73,7 @@ const BtmNavBar = ({
                                     onMouseLeave={handleIconMouseUp}
                                 >
                                     <img 
-                                        className="navIcons monoIcon shelfGrid" 
+                                        className="navIcons monoIcon shelfGrid fwIcon" 
                                         src={getAppIconPath('open-shelf')}
                                         alt={isShelfOpen ? "Close Menu" : "Open Menu"} 
                                     />
@@ -86,7 +86,7 @@ const BtmNavBar = ({
                                 className={`navIconWrapper ${activeNavIcon === icon ? 'active' : ''} ${isCameraForced ? 'disabled' : ''}`}
                             >
                                 <img 
-                                    className={`navIcons ${icon}${isTintedIcon(icon) ? ' monoIcon' : ''}`} 
+                                    className={`navIcons ${icon}${isTintedIcon(icon) ? ' monoIcon' : ''}${isFwIcon(icon) ? ' fwIcon' : ''}`} 
                                     src={getAppIconPath(icon)} 
                                     alt={`${icon} icon`}
                                     onClick={() => !isCameraForced && handleNavIconClick(icon)}

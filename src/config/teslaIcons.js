@@ -68,4 +68,10 @@ export function isMonoIcon(name) {
   return !!MONO_FIRMWARE[name] || !!TESLA_UI_ICONS[name];
 }
 
+/** True for any firmware icon (colour or mono). These carry their own padding,
+ *  so the container is sized up rather than the art being trimmed. */
+export function isFirmwareIcon(name) {
+  return !!teslaIconFile(name);
+}
+
 export default COLORED_FIRMWARE;

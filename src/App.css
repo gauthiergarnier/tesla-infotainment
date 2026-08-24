@@ -554,14 +554,18 @@ body.recordMode .small-screen-message {
 .appShelfIcon img.monoIcon {
   aspect-ratio: 1 / 1;
   object-fit: contain;
-  /* Sized a touch larger than the colour tiles (which are 50%) and with no
-     inset, so the trimmed feature glyphs read at the same visual weight. */
-  width: 62%;
   padding: 0;
   box-sizing: border-box;
   filter: brightness(0) invert(1);
   opacity: 0.92;
 }
+
+/* Firmware icons carry their own transparent padding (~40-50% of the frame), so
+   rather than trimming the art the container is sized up to bring the glyph to
+   the same visible size as the project SVGs. Colour firmware (streaming) has a
+   little less padding, mono firmware (features, grid) a little more. */
+.appShelfIcon img.fwIcon { width: 96%; }
+.appShelfIcon img.fwIcon:not(.monoIcon) { width: 84%; }
 
 /* In Drive the visualisation takes the room the car card had, and the media
    card drops to a compact strip - the proportions the real display uses when
