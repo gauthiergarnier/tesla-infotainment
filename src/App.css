@@ -547,12 +547,17 @@ body.recordMode .small-screen-message {
 }
 
 /* -------------------- UTILITY CSS END -------------------- */
-/* Square Tesla glyphs in the app shelf (see BtmNavBar.css for the dock). */
+/* Square Tesla glyphs in the app shelf (see BtmNavBar.css for the dock).
+   The shelf panel is dark in both themes and the firmware glyphs are near-black,
+   so they must render white or they vanish - which is why the car-feature icons
+   looked "missing". Flatten every mono glyph to white here. */
 .appShelfIcon img.monoIcon {
   aspect-ratio: 1 / 1;
   object-fit: contain;
   padding: 8%;
   box-sizing: border-box;
+  filter: brightness(0) invert(1);
+  opacity: 0.92;
 }
 
 /* In Drive the visualisation takes the room the car card had, and the media

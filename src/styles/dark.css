@@ -90,12 +90,9 @@ body.theme-dark .customizeBtn { color: var(--t-accent); }
 
 body.theme-dark .slider-handle { background-color: #48484a; }
 
-/* Tesla's icon set is a light-on-dark cut in the darkDay theme; until those are
-   imported, invert the day glyphs so they read on black. */
-body.theme-dark .navIcons.monoIcon,
-body.theme-dark .appShelfIcon img.monoIcon {
-  filter: invert(1) brightness(1.25);
-}
+/* Mono firmware glyphs are flattened to white by the dock (BtmNavBar.css) and
+   the shelf (App.css) directly, in both themes, since both surfaces are dark -
+   so no theme-specific override is needed here. */
 
 /* --------------------------------------------------------------- browser */
 

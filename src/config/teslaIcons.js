@@ -1,27 +1,27 @@
 /**
- * App and control icons, in three tiers.
+ * Every app and control icon, sourced from the MCU firmware for one consistent
+ * look. Two tiers:
  *
  *  1. COLORED_FIRMWARE - the car's own coloured brand tiles for the streaming
- *     services, pulled from /opt/media-webapp/images/sources/ in the MCU image
- *     (Spotify green, Apple Music red, Tidal, YouTube Music). Rendered in full
- *     colour, exactly as the car shows them.
+ *     services, from /opt/media-webapp/images/sources/ (their transparent
+ *     padding trimmed so they fill the tile like the rest). These are the only
+ *     app icons the firmware ships in colour.
  *
- *  2. MONO_FIRMWARE - monochrome glyphs from /usr/tesla/UI/assets, used ONLY for
- *     basic car functions (wipers, defrost, seats, fan) and UI controls (the
- *     app-launcher grid). These are tinted to suit the surface they sit on.
+ *  2. MONO_FIRMWARE - monochrome glyphs from /usr/tesla/UI/assets. Tesla's own
+ *     apps (camera, dashcam, toybox...) and the car-feature toggles (wipers,
+ *     defrost, seats, fan) are monochrome in the firmware - the coloured phone
+ *     / bluetooth tiles on the real dash are drawn by QtCar, not shipped as
+ *     files - so unifying on firmware means these are monochrome, tinted to
+ *     suit the surface they sit on.
  *
- *  3. Everything else falls through to the project's own coloured `app-*.svg`,
- *     which are proper brand/app tiles in their own right.
- *
- * So: apps are colourful, only genuine car-feature toggles are monochrome -
- * which is how the real dash draws them.
+ * Anything not listed falls through to the project's own `app-*.svg`.
  *
  * Refresh with: npm run import:firmware-icons -- /path/to/tesla-3d-renders-fw
  */
 
 const BASE = 'tesla/';
 
-// Tier 1: coloured brand tiles (firmware).
+// Tier 1: coloured brand tiles (firmware), padding trimmed.
 export const COLORED_FIRMWARE = {
   spotify: 'apps/spotify.png',
   'apple-music': 'apps/apple-music.png',
@@ -29,16 +29,32 @@ export const COLORED_FIRMWARE = {
   'youtube-music': 'apps/youtube-music.png',
 };
 
-// Tier 2: monochrome glyphs - car features and controls only.
+// Tier 2: monochrome firmware glyphs.
 export const MONO_FIRMWARE = {
-  // climate / comfort toggles (app/launcher)
-  wipers: 'launcher/icon_wipers.png',
-  'defrost-front': 'launcher/icon_front_defrost.png',
-  'defrost-rear': 'launcher/icon_rear_defrost.png',
-  'left-seat': 'launcher/icon_left_seat.png',
-  'right-seat': 'launcher/icon_right_seat.png',
-  fan: 'climate_icon.png',
-  // the app-launcher grid button
+  // Tesla apps (ui-styled-dom/icons)
+  camera: 'camera_icon.png',
+  bluetooth: 'bluetooth_icon.png',
+  dashcam: 'dashcam_icon.png',
+  toybox: 'toybox_icon.png',
+  arcade: 'arcade_icon.png',
+  nav: 'nav_icon.png',
+  phone: 'phone_icon.png',
+  messages: 'message_icon.png',
+  manual: 'manual_icon.png',
+  caraoke: 'caraoke_icon.png',
+  radio: 'radio_icon.png',
+  theater: 'entertainment_icon.png',
+  energy: 'charging_icon.png',
+
+  // Car-feature toggles - single-frame HVAC glyphs (hvac/icons)
+  wipers: 'feat/wipers.png',
+  'defrost-front': 'feat/defrost-front.png',
+  'defrost-rear': 'feat/defrost-rear.png',
+  'left-seat': 'feat/left-seat.png',
+  'right-seat': 'feat/right-seat.png',
+  fan: 'feat/fan.png',
+
+  // App-launcher grid button
   'open-shelf': 'dock_apps.png',
   'close-shelf': 'dock_apps.png',
 };
