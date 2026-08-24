@@ -30,7 +30,7 @@
     "predeploy": "npm run build",
     "deploy": "gh-pages -d build",
     "import:firmware-model": "bash scripts/import-firmware-model.sh",
-    "build:local": "PUBLIC_URL= react-scripts build",
+    "build:local": "PUBLIC_URL=/ react-scripts build",
     "serve:local": "npx --yes serve -s build -l 3222"
   },
   "eslintConfig": {
