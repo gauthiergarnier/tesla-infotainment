@@ -105,13 +105,13 @@
    project's wide SVGs. The wrapper is an auto-height inline-block, so a
    percentage height on the image alone has nothing to resolve against - give
    the wrapper the bar's height first, scoped to tiles that use Tesla art. */
-.navIconWrapper:has(.teslaIcon) {
+.navIconWrapper:has(.monoIcon) {
     display: flex;
     align-items: center;
     height: 100%;
 }
 
-.navIcons.teslaIcon {
+.navIcons.monoIcon {
     /* The project's SVGs carry their padding inside the artwork and render
        about 31px tall in a 103px bar; Tesla's glyphs are bare 50x50 squares.
        Matching on height keeps the two sets optically equal. */
@@ -141,15 +141,15 @@
 }
 
 .dockApps .navIcons {
-    height: 34%;
+    height: 42%;
     width: auto;
     max-width: none;
     padding: 0;
     object-fit: contain;
 }
 
-.dockApps .navIcons.teslaIcon {
-    height: 40%;
+.dockApps .navIcons.monoIcon {
+    height: 34%;
     padding: 0;
 }
 
@@ -158,16 +158,20 @@
     height: 34%;
 }
 
-/* The nav bar is always black, in both themes, so every dock glyph must render
-   white regardless of appearance - the firmware PNGs (grey) and the few project
-   SVGs (coloured) alike. brightness(0) invert(1) flattens any artwork to a clean
-   white silhouette while preserving transparency. The doubled selector outranks
-   the theme-scoped invert in dark.css. */
-.dockApps .navIcons,
-body.theme-dark .dockApps .navIcons,
-body:not(.theme-dark) .dockApps .navIcons {
+/* The nav bar is always black in both themes. App tiles render in their own
+   colour (Spotify green, Apple Music red, the project's colour SVGs); only the
+   monochrome control glyphs - the app-launcher grid - are flattened to white so
+   they read on the black bar. The doubled selector outranks dark.css. */
+.dockApps .navIcons.monoIcon,
+body.theme-dark .dockApps .navIcons.monoIcon,
+body:not(.theme-dark) .dockApps .navIcons.monoIcon {
     filter: brightness(0) invert(1);
     opacity: 0.92;
+}
+
+/* Colour tiles: square, gently rounded, full colour. */
+.dockApps .navIcons:not(.monoIcon) {
+    border-radius: 22%;
 }
 
 .dockApps .navIconWrapper.active .navIcons,

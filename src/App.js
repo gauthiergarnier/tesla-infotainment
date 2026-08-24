@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import LoadingScreen from './components/LoadingScreen/LoadingScreen';
 import { VehicleModel } from './components/VehicleModel/VehicleModel';
-import { getImagePath, getAppIconPath, isTeslaIcon } from './utils/assetPaths';
+import { getImagePath, getAppIconPath, isTintedIcon } from './utils/assetPaths';
 import { UserProfileProvider } from './contexts/UserProfileContext';
 import { CarLockProvider } from './contexts/CarLockContext';
 import { useScene } from './contexts/SceneContext';
@@ -241,7 +241,7 @@ function App() {
               {appsTopShelf.map((icon, index) => (
                 <div key={index} className="appShelfIcon">
                   <img  
-                    className={isTeslaIcon(icon) ? 'teslaIcon' : undefined}
+                    className={isTintedIcon(icon) ? 'monoIcon' : undefined}
                     src={getAppIconPath(icon)}
                     alt={`${icon} icon`} 
                   />
@@ -261,7 +261,7 @@ function App() {
                   }}
                 >
                   <img
-                    className={isTeslaIcon(icon) ? 'teslaIcon' : undefined}
+                    className={isTintedIcon(icon) ? 'monoIcon' : undefined}
                     src={getAppIconPath(icon)}
                     alt={`${icon} icon`}
                   />
