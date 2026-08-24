@@ -150,17 +150,20 @@
 /* Every tile the same height, off the now-fixed row, so the tray reads evenly
    whether a tile is a colour brand icon, a colour SVG, or the mono grid. */
 .dockApps .navIcons {
-    height: 50%;
+    height: 46%;
     width: auto;
+    aspect-ratio: 1 / 1;
     max-width: none;
     padding: 0;
     object-fit: contain;
+    transform-origin: center;
 }
 
-/* Firmware icons keep their native padding, so their container is taller to
-   bring the glyph up to the size of the project SVG tiles. */
-.dockApps .navIcons.fwIcon { height: 82%; }
-.dockApps .navIcons.fwIcon:not(.monoIcon) { height: 74%; }
+/* Firmware icons carry their own padding; the glyph is scaled up with a
+   transform (visual only) instead of a taller box, so every dock tile keeps the
+   same layout box - same size, same vertical centre - as the project SVGs. */
+.dockApps .navIcons.fwIcon:not(.monoIcon) { transform: scale(1.8); }
+.dockApps .navIcons.fwIcon.monoIcon { transform: scale(2.2); }
 
 /* The nav bar is always black in both themes. App tiles render in their own
    colour (Spotify green, Apple Music red, the project's colour SVGs); only the

@@ -336,36 +336,56 @@ body.recordMode .small-screen-message {
   font-size: 0.5em;
 }
 
+/* The climate strip: its five toggles in a centred, evenly-spaced row. */
 .appTopShelf {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-content: center;
-  justify-content: space-evenly;
-  align-items: center;
-  border-bottom: 1px solid grey;
-  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  justify-items: center;
+  align-items: start;
+  column-gap: 0.6em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  padding: 1em 8%;
 }
 
+/* The app grid: fixed six columns so every tile lines up in clean rows and
+   columns with even gaps, and the short last row left-aligns instead of the old
+   flex space-evenly scattering it (which dropped Tidal out of line). */
 .appShelf {
-  border-radius: 10px;
-  padding: 10px;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-content: center;
-  justify-content: space-evenly;
-  align-items: stretch;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  justify-items: center;
+  align-items: start;
+  column-gap: 0.5em;
+  row-gap: 1.3em;
+  padding: 1.2em 4% 1.4em;
 }
 
+/* Each cell: icon centred with its label directly beneath, uniform structure so
+   the baselines line up across the whole grid. */
 .appShelfIcon {
-  padding: 5px;
-  width: 13%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5em;
+  text-align: center;
 }
 
+/* One icon box, identical for every cell, so row heights and label baselines
+   line up across the whole grid. Firmware icons carry their own padding; rather
+   than widening the box (which made their rows taller and dropped labels out of
+   line) the glyph is scaled up with a transform, which is visual only and does
+   not change the layout box. */
 .appShelfIcon img {
-  width: 50%;
+  width: 46%;
+  aspect-ratio: 1 / 1;
+  object-fit: contain;
+  transform-origin: center;
 }
+.appShelfIcon img.fwIcon:not(.monoIcon) { transform: scale(1.8); }   /* streaming brands */
+.appShelfIcon img.fwIcon.monoIcon { transform: scale(2.2); }         /* car features */
 
 .customizeBtn {
   position: absolute;
@@ -559,13 +579,6 @@ body.recordMode .small-screen-message {
   filter: brightness(0) invert(1);
   opacity: 0.92;
 }
-
-/* Firmware icons carry their own transparent padding (~40-50% of the frame), so
-   rather than trimming the art the container is sized up to bring the glyph to
-   the same visible size as the project SVGs. Colour firmware (streaming) has a
-   little less padding, mono firmware (features, grid) a little more. */
-.appShelfIcon img.fwIcon { width: 96%; }
-.appShelfIcon img.fwIcon:not(.monoIcon) { width: 84%; }
 
 /* In Drive the visualisation takes the room the car card had, and the media
    card drops to a compact strip - the proportions the real display uses when
