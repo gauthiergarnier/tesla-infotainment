@@ -31,9 +31,16 @@ export const TESLA_APP_ICONS = {
   toybox: 'toybox_icon.png',
   energy: 'charging_icon.png',
   fan: 'climate_icon.png',
+  camera: 'camera_icon.png',
+  music: 'dock_music.png',
+  'apple-music': 'dock_music.png',
+  'amazon-music': 'dock_music.png',
+  'youtube-music': 'dock_music.png',
+  podcasts: 'entertainment_icon.png',
+  'open-shelf': 'dock_apps.png',
+  'close-shelf': 'dock_apps.png',
 
   // app/launcher - the climate strip along the top of the shelf
-  camera: 'launcher/icon_camera_preview.png',
   wipers: 'launcher/icon_wipers.png',
   'defrost-front': 'launcher/icon_front_defrost.png',
   'defrost-rear': 'launcher/icon_rear_defrost.png',

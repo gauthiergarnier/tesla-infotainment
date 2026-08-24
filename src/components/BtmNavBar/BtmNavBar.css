@@ -121,3 +121,56 @@
     padding: 0 17px;
     object-fit: contain;
 }
+
+/* ------------------------------------------------------------ dock, tidied */
+
+/* One consistent size and rhythm for the whole app tray, whichever art a tile
+   uses. The firmware glyphs are bare squares; the few project SVGs carry their
+   own padding, so they get a hair more height to read the same. Spacing comes
+   from a gap on the row rather than per-icon padding, which was uneven. */
+.dockApps {
+    gap: 0.7em;
+    justify-content: center;
+}
+
+.dockApps .navIconWrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+.dockApps .navIcons {
+    height: 34%;
+    width: auto;
+    max-width: none;
+    padding: 0;
+    object-fit: contain;
+}
+
+.dockApps .navIcons.teslaIcon {
+    height: 40%;
+    padding: 0;
+}
+
+/* The launcher grid reads better a touch smaller than the app glyphs. */
+.dockApps .navIcons.shelfGrid {
+    height: 34%;
+}
+
+/* The nav bar is always black, in both themes, so every dock glyph must render
+   white regardless of appearance - the firmware PNGs (grey) and the few project
+   SVGs (coloured) alike. brightness(0) invert(1) flattens any artwork to a clean
+   white silhouette while preserving transparency. The doubled selector outranks
+   the theme-scoped invert in dark.css. */
+.dockApps .navIcons,
+body.theme-dark .dockApps .navIcons,
+body:not(.theme-dark) .dockApps .navIcons {
+    filter: brightness(0) invert(1);
+    opacity: 0.92;
+}
+
+.dockApps .navIconWrapper.active .navIcons,
+.dockApps .navIcons:hover {
+    opacity: 1;
+}

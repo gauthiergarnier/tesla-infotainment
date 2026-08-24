@@ -14,18 +14,15 @@ const BtmNavBar = ({
     isShelfOpen,
     isCameraForced
 }) => {
+    // The centre app tray. Every entry resolves to a firmware glyph except the
+    // browser, which the firmware has no launcher icon for.
     const dockApps = [
-        'camera',
-        // 'calendar',
-        // 'toybox',
-        // 'theater',
-        'arcade',
-        'bluetooth',
-        'browser',
         'apple-music',
+        'camera',
+        'bluetooth',
         'dashcam',
+        'toybox',
         'open-shelf',
-        'podcasts',
     ];
 
     const handleIconMouseDown = (event) => {
@@ -76,8 +73,8 @@ const BtmNavBar = ({
                                     onMouseLeave={handleIconMouseUp}
                                 >
                                     <img 
-                                        className="icon" 
-                                        src={getImagePath(isShelfOpen ? "icon-close-shelf.svg" : "icon-open-shelf.svg")}
+                                        className="navIcons teslaIcon shelfGrid" 
+                                        src={getAppIconPath('open-shelf')}
                                         alt={isShelfOpen ? "Close Menu" : "Open Menu"} 
                                     />
                                 </div>
