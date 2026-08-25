@@ -219,7 +219,9 @@ body.theme-dark .airbagStatus * {
 /* On the real display the media card is an inset rounded card sitting on the
    screen background, not a full-bleed white slab. */
 body.theme-dark .musicPanel {
-  background-color: var(--t-card);
+  background-color: rgba(28, 28, 30, 0.6);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  backdrop-filter: blur(18px) saturate(1.4);
   box-shadow: none;
   border-radius: 12px;
 }

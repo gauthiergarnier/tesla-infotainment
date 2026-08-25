@@ -91,10 +91,11 @@ export const LANES = [
   { x: 1.8, dashed: false, color: '#f4f4f4' },
 ];
 
-export const ROAD_SURFACE = '#9a9da1';
-// The surface plane's opacity. 0 leaves only the lane markings, floating on the
-// screen background - which is what "transparent road" asks for.
-export const ROAD_SURFACE_OPACITY = 0;
+export const ROAD_SURFACE = '#aeb2b6';
+// The surface plane's opacity. A light grey road gives the white/yellow markings
+// something to read against; the sky above the horizon stays transparent so the
+// panel colour shows through there.
+export const ROAD_SURFACE_OPACITY = 0.92;
 export const LANE_WIDTH = 0.1;
 export const ROAD_LENGTH = 240;
 export const DASH_CYCLE_M = 12.5;

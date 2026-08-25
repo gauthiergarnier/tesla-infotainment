@@ -2,27 +2,41 @@
     font-family: 'Open Sans';
     font-weight: 600;
     display: grid;
-    grid-template-columns: 15% 1fr;
+    /* auto first column so the album art can be a true square (its width tracks
+       its height) rather than a fixed 15% that squeezes it. */
+    grid-template-columns: auto 1fr;
     grid-template-rows: 50% 2px calc(50% - 2px);
-    background-color: white;
+    /* Slightly transparent with a frosted blur of whatever sits behind it. */
+    background-color: rgba(255, 255, 255, 0.68);
+    -webkit-backdrop-filter: blur(18px) saturate(1.4);
+    backdrop-filter: blur(18px) saturate(1.4);
     height: 40%;
     width: 96%;
     max-width: 569px;
     margin: 0px auto 10px;
-    border-radius: 5px;
-    box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.18) 0px 6px 18px -6px;
     overflow: hidden;
 }
 .albumArt {
     grid-column: 1 / 2;
     grid-row: 1 / 3;
+    height: 100%;
+    aspect-ratio: 1 / 1;
+    padding: 7px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .albumArt img {
     height: 100%;
     width: 100%;
-    max-width: 62px;
-    border-top-left-radius: 5px;
+    aspect-ratio: 1 / 1;
+    max-width: none;
+    object-fit: cover;
+    border-radius: 6px;
 }
 
 .musicText {
@@ -90,7 +104,7 @@
     color: #a1a1a1;
     height: auto;
     width: 100%;
-    background-color: rgb(255, 255, 255, 90%);
+    background-color: transparent;
     border: none;  
     border-radius: 12px;
 }

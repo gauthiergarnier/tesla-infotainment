@@ -634,6 +634,7 @@ function Road({ visible, speedMph }) {
             transparent
             alphaTest={0.5}
             depthWrite={false}
+            toneMapped={false}
             map={lane.dashed ? lanes.tex : null}
             color={lane.color}
           />
@@ -645,7 +646,7 @@ function Road({ visible, speedMph }) {
       {ROAD_SURFACE_OPACITY > 0 && (
         <mesh position={[0, 0, 0]} rotation={[-Math.PI / 2, 0, 0]} renderOrder={1}>
           <planeGeometry args={[26, ROAD_LENGTH]} />
-          <meshBasicMaterial color={ROAD_SURFACE} transparent opacity={ROAD_SURFACE_OPACITY} />
+          <meshBasicMaterial color={ROAD_SURFACE} transparent opacity={ROAD_SURFACE_OPACITY} toneMapped={false} />
         </mesh>
       )}
     </group>
@@ -700,7 +701,8 @@ function SceneRig({ environment, exposure, ambient }) {
     let created = null;
 
     if (env.kind === 'solid') {
-      scene.background = new THREE.Color(env.color);
+      // Transparent: let the underlying panel colour show through.
+      scene.background = null;
     } else if (env.kind === 'cube') {
       new THREE.CubeTextureLoader().load(
         CUBE_FACES.map((f) => env.dir + f + '.png'),
@@ -763,8 +765,8 @@ function ControlledOrbitControls({ driving }) {
     if (driving) {
       // Behind the car, a little above, aimed a short way down the road so the
       // car sits high in frame with the lane lines running to a vanishing point.
-      controls.target.set(0, 0.9, -2.6);
-      const dist = 9;
+      controls.target.set(0, 1.0, -3.4);
+      const dist = 13;
       const polar = Math.PI / 2 - 0.34; // slight downward tilt
       const azimuth = 0;                 // dead behind a car whose nose is -Z
       const off = new THREE.Vector3().setFromSpherical(new THREE.Spherical(dist, polar, azimuth));
@@ -846,8 +848,9 @@ export function VehicleModel({
   return (
     <Canvas
       dpr={[1, 2]}
+      gl={{ alpha: true, antialias: true, premultipliedAlpha: false }}
       camera={{ fov: 40, position: cameraPosition, near: 0.1, far: 1000 }}
-      style={{ position: 'relative', width: '100%', height: '100%' }}
+      style={{ position: 'relative', width: '100%', height: '100%', background: 'transparent' }}
       className="carModelWrapper"
       /* react-three-fiber only renders its children once react-use-measure has
          reported a non-zero size. This container is laid out by flexbox and does
@@ -857,9 +860,9 @@ export function VehicleModel({
          logged. Measuring undebounced makes it deterministic. */
       resize={{ scroll: false, debounce: { scroll: 0, resize: 0 } }}
     >
-      {/* SceneRig owns scene.background; this is only the clear colour before
-          the backdrop texture arrives. */}
-      <color attach="background" args={[isDarkTheme() ? "#000000" : "#f1f1f1"]} />
+      {/* No scene.background - the canvas is transparent so the panel colour
+          shows through, matching the block the card sits in. SceneRig only sets
+          a background for the textured environments (Studio / Clouds / Night). */}
       <SceneErrorBoundary>
       {/* Lighting is built here rather than with drei's <Environment>: its
           presets pull an HDRI from a CDN and, when that request hangs, Stage
