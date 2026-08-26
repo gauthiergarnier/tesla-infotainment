@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSetting } from '../vehicleSettings';
+import { useScene } from '../../../../contexts/SceneContext';
 import {
   Pane, Section, Row, Segmented, SwitchRow, SliderRow, Action, ChevronRow,
 } from './ui/SettingsUI';
@@ -12,7 +13,15 @@ import {
  * each one explains itself.
  */
 export const Display = () => {
-  const [theme, setTheme] = useSetting('displayTheme');
+  // Display Mode is the one setting that reaches outside the vehicle store:
+  // the theme lives in SceneContext (appearance -> isDark -> body.theme-dark),
+  // shared with the car card and the render rig. Bridge the segmented labels
+  // to that state so the control actually switches the screen. Auto follows
+  // the clock (dark after 19:00).
+  const { appearance, setAppearance } = useScene();
+  const THEME_LABELS = { light: 'Light', dark: 'Dark', auto: 'Auto' };
+  const theme = THEME_LABELS[appearance] || 'Auto';
+  const setTheme = (label) => setAppearance(label.toLowerCase());
   const [brightness, setBrightness] = useSetting('brightness');
   const [brightnessAuto, setBrightnessAuto] = useSetting('brightnessAuto');
   const [distance, setDistance] = useSetting('distanceUnits');
