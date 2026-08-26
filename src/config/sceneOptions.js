@@ -92,10 +92,11 @@ export const LANES = [
 ];
 
 export const ROAD_SURFACE = '#aeb2b6';
-// The surface plane's opacity. A light grey road gives the white/yellow markings
-// something to read against; the sky above the horizon stays transparent so the
-// panel colour shows through there.
-export const ROAD_SURFACE_OPACITY = 0.92;
+// The surface plane's opacity. Zero: the markings and the car's own lit pools
+// carry the road, and the panel colour shows straight through - which is what
+// the car's visualisation does, and what keeps the 3D card sitting on the UI
+// rather than in a grey box.
+export const ROAD_SURFACE_OPACITY = 0;
 export const LANE_WIDTH = 0.1;
 export const ROAD_LENGTH = 240;
 export const DASH_CYCLE_M = 12.5;
