@@ -824,11 +824,16 @@ export function VehicleModel({
   rotateToFrunk,
   rotateToTrunk,
   activeGear,
-  vehicleId = DEFAULT_VEHICLE,
+  vehicleId: vehicleIdProp = DEFAULT_VEHICLE,
   colorKey = DEFAULT_COLOR,
-  wheelKey,
+  wheelKey: wheelKeyProp,
 }) {
   const { lights, environment, ambient, exposure, speed } = useScene();
+  /* The Colorizer (Software settings) owns the car on screen; the props stay as
+     the URL-driven fallback for callers that pin a vehicle. */
+  const config = usePaint();
+  const vehicleId = config.vehicleId || vehicleIdProp;
+  const wheelKey = config.wheelKey || wheelKeyProp;
   const driving = activeGear === 'D';
   /* A 4.7 m car viewed at 45 degrees projects about 4.8 m across. At the old
      5 m the frame cut the bumpers off; 7 m leaves it room to breathe. */

@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { COLORS, colorByKey, DEFAULT_VEHICLE } from '../../../../config/vehicleConfig';
+import { COLORS, colorByKey, wheelsFor } from '../../../../config/vehicleConfig';
 import {
-  usePaint, setPaint, resetPaint, addCustomWrap, removeCustomWrap,
+  MODELS, yearsFor, versionsFor, resolveVehicle, entryFor,
+} from '../../../../config/vehicleCatalog';
+import {
+  usePaint, setPaint, setVehicle, resetPaint, addCustomWrap, removeCustomWrap,
 } from '../../../../utils/paintStore';
 import { customWrapFromFile } from '../../../../utils/wrapLayer';
-import { Section, Row, Segmented, Action } from './ui/SettingsUI';
+import { Section, Row, Segmented, Action, Dropdown } from './ui/SettingsUI';
 import './Colorizer.css';
 
 /**
@@ -39,8 +42,23 @@ export const Colorizer = () => {
   const fileRef = useRef(null);
   const uploadCount = useRef(0);
 
-  const vehicleId = DEFAULT_VEHICLE;
+  const vehicleId = paint.vehicleId;
   const active = colorByKey(paint.colorKey);
+
+  // Model / year / version are three views of one choice: the vehicle id. Each
+  // dropdown re-resolves the id, and resolveVehicle absorbs a selection that the
+  // new model or year no longer offers.
+  const entry = entryFor(vehicleId) || {};
+  const years = yearsFor(entry.model);
+  const year = years.includes(paint.year) ? paint.year : (entry.to || years[0]);
+  const versions = versionsFor(entry.model, year);
+  const rims = wheelsFor(vehicleId);
+
+  const choose = (model, y, version) => {
+    const id = resolveVehicle(model, y, version);
+    setPaint({ year: y });
+    setVehicle(id);
+  };
 
   // The wrap catalogue is imported separately (scripts/import-wraps.sh) because
   // it is ~108MB, so treat a missing manifest as "no wraps installed" rather
@@ -78,6 +96,53 @@ export const Colorizer = () => {
 
   return (
     <>
+      <Section
+        title="Vehicle"
+        note="Picks which car the screen shows. The wrap catalogue follows it, since
+              every template is cut for one body."
+      >
+        <Row label="Model">
+          <Dropdown
+            ariaLabel="Model"
+            value={entry.model}
+            options={MODELS}
+            onChange={(m) => choose(m, year, entry.version)}
+          />
+        </Row>
+
+        <Row label="Year">
+          <Dropdown
+            ariaLabel="Model year"
+            value={String(year)}
+            options={years.map((y) => String(y))}
+            onChange={(y) => choose(entry.model, Number(y), entry.version)}
+          />
+        </Row>
+
+        <Row label="Version">
+          <Dropdown
+            ariaLabel="Version"
+            value={entry.version}
+            disabled={versions.length < 2}
+            options={versions.map((v) => v.version)}
+            onChange={(v) => choose(entry.model, year, v)}
+          />
+        </Row>
+
+        <Row label="Rims">
+          <Dropdown
+            ariaLabel="Rims"
+            value={paint.wheelKey || ''}
+            disabled={rims.length < 2}
+            options={rims.map((w) => ({
+              value: w.key,
+              label: w.label || w.key.replace(/_/g, ' '),
+            }))}
+            onChange={(k) => setPaint({ wheelKey: k })}
+          />
+        </Row>
+      </Section>
+
       <Section
         title="Paint"
         note="Changes what the car looks like on screen. It does not affect the

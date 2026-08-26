@@ -661,3 +661,61 @@ body.theme-dark .tsPane {
 }
 
 .tsSignal i.on { background: var(--ts-ink); }
+
+/* --------------------------------------------------------------- dropdown */
+
+/* The car's dropdown is a radius-10 button on the tertiary background with a
+   chevron; the chevron is drawn on the shell so the <select> itself can stay a
+   plain, fully accessible control. */
+.tsSelectShell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  background: var(--ts-card);
+  border: var(--ts-border) solid var(--ts-btn-border);
+  border-radius: var(--ts-radius);
+  min-height: var(--ts-ctl-h);
+  min-width: 150px;
+}
+
+.tsSelectShell::after {
+  content: '';
+  position: absolute;
+  right: 14px;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--ts-ink-dim);
+  border-bottom: 2px solid var(--ts-ink-dim);
+  transform: translateY(-2px) rotate(45deg);
+  pointer-events: none;
+}
+
+.tsSelectShell.off { opacity: 0.5; }
+
+.tsSelect {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  font-size: var(--ts-fs-control);
+  color: var(--ts-ink);
+  background: transparent;
+  border: 0;
+  outline: none;
+  width: 100%;
+  padding: 0 34px 0 14px;
+  min-height: calc(var(--ts-ctl-h) - 2px);
+  cursor: pointer;
+}
+
+.tsSelect:disabled { cursor: default; }
+
+/* The popup list is drawn by the OS, so it needs real colours of its own. */
+.tsSelect option {
+  color: #1f1f1f;
+  background: #ffffff;
+}
+
+body.theme-dark .tsSelect option {
+  color: #ffffff;
+  background: #2c2c2e;
+}

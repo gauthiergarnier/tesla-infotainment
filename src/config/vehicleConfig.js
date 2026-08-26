@@ -52,8 +52,8 @@ function pick(key, allowed, fallback) {
   return v && allowed.includes(v) ? v : fallback;
 }
 
-export const DEFAULT_VEHICLE = pick('vehicle', VEHICLE_IDS, 'model3_highland');
-export const DEFAULT_COLOR = pick('color', COLORS.map((c) => c.key), 'PearlWhite');
+export const DEFAULT_VEHICLE = pick('vehicle', VEHICLE_IDS, 'modely_juniper');
+export const DEFAULT_COLOR = pick('color', COLORS.map((c) => c.key), 'UltraRed');
 
 /** Wheel designs that actually fit a given vehicle, sorted for display. */
 export function wheelsFor(vehicleId) {

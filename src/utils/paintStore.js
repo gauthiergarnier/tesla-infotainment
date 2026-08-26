@@ -1,5 +1,5 @@
 import { useSyncExternalStore, useCallback } from 'react';
-import { DEFAULT_COLOR } from '../config/vehicleConfig';
+import { DEFAULT_COLOR, DEFAULT_VEHICLE, VEHICLES } from '../config/vehicleConfig';
 
 /**
  * Paint Shop state — colour, paint type, trim and the current wrap.
@@ -11,9 +11,12 @@ import { DEFAULT_COLOR } from '../config/vehicleConfig';
  */
 
 const defaults = {
+  vehicleId: DEFAULT_VEHICLE,
+  year: 2026,
+  wheelKey: (VEHICLES[DEFAULT_VEHICLE] || {}).default_wheel || null,
   colorKey: DEFAULT_COLOR,
   paintType: 'Metallic',   // Solid | Metallic | Matte
-  trim: 'Chrome',          // Chrome | Black  (the car's "chrome delete")
+  trim: 'Black',           // Chrome | Black  (the car's "chrome delete")
   wrap: null,              // wrap descriptor, or null for bare paint
   customWraps: [],         // wraps the user uploaded this session
 };
@@ -32,6 +35,13 @@ export function setPaint(patch) {
   if (!changed) return;
   state = next;
   emit();
+}
+
+export function setVehicle(vehicleId) {
+  if (vehicleId === state.vehicleId) return;
+  const v = VEHICLES[vehicleId] || {};
+  const keep = (v.wheels || []).includes(state.wheelKey);
+  setPaint({ vehicleId, wheelKey: keep ? state.wheelKey : (v.default_wheel || null) });
 }
 
 export function resetPaint() {

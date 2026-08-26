@@ -198,6 +198,28 @@ export const Stepper = ({ value, onChange, min = 0, max = 100, step = 1, format 
   </div>
 );
 
+/**
+ * Dropdown. The car's own `SettingsDropDownButton` is a radius-10 button on the
+ * tertiary background that opens a list; a native <select> gives the same
+ * affordance, keyboard behaviour and long-list scrolling for free.
+ */
+export const Dropdown = ({ value, options, onChange, disabled = false, ariaLabel }) => (
+  <div className={`tsSelectShell${disabled ? ' off' : ''}`}>
+    <select
+      className="tsSelect"
+      value={value}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      onChange={(e) => onChange && onChange(e.target.value)}
+    >
+      {options.map((opt) => {
+        const o = typeof opt === 'object' ? opt : { value: opt, label: String(opt) };
+        return <option key={o.value} value={o.value}>{o.label}</option>;
+      })}
+    </select>
+  </div>
+);
+
 export const Action = ({ label, onClick, primary = false, disabled = false }) => (
   <button
     type="button"
