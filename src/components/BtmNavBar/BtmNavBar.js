@@ -19,7 +19,6 @@ const BtmNavBar = ({
         // 'calendar',
         // 'toybox',
         // 'theater',
-        'arcade',
         'bluetooth',
         'apple-music',
         'dashcam',

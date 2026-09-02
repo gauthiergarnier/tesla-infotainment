@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './VerticalSliderPanel.css';
 import { AppleMusic } from '../Apps/AppleMusic/AppleMusic';
-import { Arcade } from '../Apps/Arcade/Arcade';
 import { BackupCam } from '../Apps/BackupCam/BackupCam';
 import { Bluetooth } from '../Apps/Bluetooth/Bluetooth';
 import { Browser } from '../Apps/Browser/Browser';
@@ -16,7 +15,6 @@ import { Toybox } from '../Apps/Toybox/Toybox';
 // keep it in step with the switch in renderContent below.
 export const LAUNCHABLE_APPS = new Set([
     'apple-music',
-    'arcade',
     'bluetooth',
     'browser',
     'calendar',
@@ -93,8 +91,6 @@ const VerticalSliderPanel = ({ isOpen, activeIcon, onClose, isCameraForced }) =>
         switch (activeIcon) {
             case 'apple-music':
                 return <AppleMusic />;
-            case 'arcade':
-                return <Arcade />;
             case 'bluetooth':
                 return <Bluetooth />;
             case 'browser':

@@ -77,7 +77,6 @@ function App() {
     'caraoke',
     'manual',
     'toybox',
-    'arcade',
     'tidal',
   ];
 

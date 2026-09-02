@@ -41,12 +41,9 @@ const LoadingScreen = () => {
   return (
     <div className="loading-screen">
       <div className="displayInsideBezel">
-        <div className="circle-container">
-          <div className="circle"></div>
-          <div className="circle-small"></div>
-          <div className="circle-big"></div>
-          <div className="circle-inner-inner"></div>
-          <div className="circle-inner"></div>
+        <div className="loading-indicator" aria-hidden="true">
+          <span className="loading-halo"></span>
+          <span className="loading-sweep"></span>
         </div>
         <img src={getImagePath('logo-grey.svg')} alt="Tesla Logo" className="tesla-logo spinning" />
         <p className="loading-text">{loadingText}{dots}</p>

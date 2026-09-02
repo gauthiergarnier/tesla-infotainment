@@ -6,7 +6,7 @@ Experience a simulated Tesla infotainment system in your browser!
 ![App Preview](public/app-preview.png)
 
 ## Features to try out
-- Realistic 3D model of Tesla Model Y. Try opening the trunk and frunk!
+- Low-poly 3D Tesla Model Y. Try opening the trunk and frunk, or clicking a door.
 - Interactive infotainment system simulation. Play a podcast, adjust the volume, etc.
 - Put the car in reverse (Click the R) and see what's behind you!
 - Try searching on the map. Turn on traffic or different map styles.
@@ -106,12 +106,16 @@ MIT — see [`LICENSE`](LICENSE). This is a fork of
 the copyright is James Almeida's and the notice travels with every copy, this
 one included.
 
-The licence covers the code in this repository and nothing else. The 3D model,
-the loading animations and the OutRun game credited below each arrive under
-their own terms — check them before redistributing a build.
+The licence covers the code in this repository, and the code only.
 
-### Thanks
-- Want to thank Ameer Studio for sharing the [3D model of the Tesla Model 3](https://sketchfab.com/3d-models/tesla-2018-model-3-5ef9b845aaf44203b6d04e2c677e444f) I'm using in the simulator.
-- Also thanks to Vasilj Miloevi for the [loading screen circle animations](https://codepen.io/eboye/pen/ANPxVX) that I used for the loading screen.
-- Thanks to Patrick Stillhart for sharing the [OutRun video game on Codepen](https://codepen.io/arcs/pen/aGzNKY) that I refactored to work inside of the Arcade in this project.
+**The bundled 3D vehicle models are not ours and are not MIT.** `public/car-models/`
+holds `modely.glb` and `wheel-gemini.glb`, extracted from the Tesla Android app
+(`com.teslamotors.tesla`) and converted to glTF. They are Tesla's assets, carry
+no redistribution grant, and are here because this is an internal demo harness.
+Anyone forking, redeploying or otherwise distributing this repository needs to
+resolve that themselves — swapping in a model you have the rights to is a
+two-line change in `src/components/VehicleModel/VehicleModel.js`.
 
+Two third-party pieces this project used to carry have been removed rather than
+relicensed: the CodePen loading animation (replaced with an original one) and
+the OutRun arcade game (the Arcade app is gone with it).

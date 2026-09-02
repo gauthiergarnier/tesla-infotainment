@@ -47,183 +47,56 @@
 }
 
 
-/* Loading Circles */
-.circle-container {
+/* Loading indicator.
+   Original work. The concentric circle animation that used to sit here came
+   from a CodePen and was removed with the rest of the third-party assets, so
+   this is a fresh one: a conic sweep orbiting the logo over a halo that
+   breathes at half its rate, the two drifting in and out of phase rather than
+   pulsing together. */
+.loading-indicator {
   position: absolute;
   top: 50%;
   left: 50%;
+  width: 22%;
+  aspect-ratio: 1;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  pointer-events: none;
 }
 
-.circle {
-    width: 180px;
-    height: 180px;
-    border: 10px inset rgb(170, 170, 170, 0.1);
-    display: block;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-left: -100px;
-    margin-top: -100px;
-    border-radius: 200px;
-    -moz-animation: rotate 5s infinitelinear;
-    -webkit-animation: rotate 5s infinite linear;
-    animation: rotate 5s infinite linear;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+.loading-indicator span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
 }
 
-.circle-small {
-    width: 150px;
-    height: 150px;
-    border: 6px outset rgb(150, 150, 150, 0.1);
-    display: block;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-left: -81px;
-    margin-top: -81px;
-    border-radius: 156px;
-    -moz-animation: rotate-rev 3s infinite linear;
-    -webkit-animation: rotate-rev 3s infinite linear;
-    animation: rotate-rev 3s infinite linear;
-    box-shadow: 0 0 5px rgba(0,0,0,0.1);
+/* The sweep. A conic gradient masked down to a ring — one element, no
+   pseudo-element stack, and it stays a perfect circle at any size because the
+   mask is expressed in percentages. */
+.loading-sweep {
+  background: conic-gradient(
+    from 0deg,
+    rgba(208, 208, 208, 0) 0deg,
+    rgba(208, 208, 208, 0) 200deg,
+    rgba(208, 208, 208, 0.55) 330deg,
+    rgba(232, 232, 232, 0.9) 360deg
+  );
+  -webkit-mask: radial-gradient(closest-side, transparent 86%, #000 87%);
+  mask: radial-gradient(closest-side, transparent 86%, #000 87%);
+  animation: loading-orbit 1.6s linear infinite;
 }
 
-.circle-big {
-    width: 210px;
-    height: 210px;
-    border: 4px dotted rgb(96, 96, 96, 0.1);
-    display: block;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-left: -109px;
-    margin-top: -109px;
-    border-radius: 214px;
-    -moz-animation: rotate-rev 10s infinite linear;
-    -webkit-animation: rotate-rev 10s infinite linear;
-    animation: rotate-rev 10s infinite linear;
+.loading-halo {
+  border: 1px solid rgba(208, 208, 208, 0.18);
+  animation: loading-breathe 3.2s ease-in-out infinite;
 }
 
-.circle-inner {
-    width: 80px;
-    height: 80px;
-    background-color: rgb(51, 51, 51, 0.1);
-    display: block;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-left: -40px;
-    margin-top: -40px;
-    border-radius: 80px;
-    -moz-animation: pulse 1.5s infinite ease-in;
-    -webkit-animation: pulse 1.5s infinite ease-in;
-    animation: pulse 1.5s infinite ease-in;
-    opacity: 1;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
+@keyframes loading-orbit {
+  to { transform: rotate(360deg); }
 }
 
-.circle-inner-inner {
-    width: 100px;
-    height: 100px;
-    background-color: rgb(36, 36, 36, 0.1);
-    display: block;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    margin-left: -50px;
-    margin-top: -50px;
-    border-radius: 100px;
-    -moz-animation: pulse 1.5s infinite ease-in;
-    -webkit-animation: pulse 1.5s infinite ease-in;
-    animation: pulse 1.5s infinite ease-in;
-    box-shadow: 0 0 5px rgba(0,0,0,0.2);
-}
-
-/*==============ANIMATIONS=================*/
-
-/*==============ROTATE=====================*/
-
-@-moz-keyframes rotate {
-  0% {-moz-transform: rotate(0deg);}
-  100% {-moz-transform: rotate(360deg);}
-}
-
-@-webkit-keyframes rotate {
-	0% {-webkit-transform: rotate(0deg);}
-	100% {-webkit-transform: rotate(360deg);}
-}
-
-@keyframes rotate {
-	0% {transform: rotate(0deg);}
-	100% {transform: rotate(360deg);}
-}
-
-/*==============ROTATE-REV=================*/
-
-@-moz-keyframes rotate-rev {
-	0% {-moz-transform: rotate(0deg);}
-	100% {-moz-transform: rotate(-360deg);}
-}
-
-@-webkit-keyframes rotate-rev {
-	0% {-webkit-transform: rotate(0deg);}
-	100% {-webkit-transform: rotate(-360deg);}
-}
-
-@keyframes rotate-rev {
-	0% {transform: rotate(0deg);}
-	100% {transform: rotate(-360deg);}
-}
-
-/*==============PULSE======================*/
-
-@-moz-keyframes pulse {
-	0% {
-        -moz-transform: scale(0.1);
-        opacity: 0.2;
-    }
-	50% {
-        -moz-transform: scale(1);
-        opacity: 0.8;
-    }
-    100% {
-        -moz-transform: scale(0.1);
-        opacity: 0.2;
-    }
-}
-
-@-webkit-keyframes pulse {
-	0% {
-        -webkit-transform: scale(0.1);
-        opacity: 0.2;
-    }
-	50% {
-        -webkit-transform: scale(1);
-        opacity: 0.8;
-    }
-     100% {
-        -webkit-transform: scale(0.1);
-        opacity: 0.2;
-    }
-}
-
-@keyframes pulse {
-	0% {
-        transform: scale(0.1);
-        opacity: 0.2;
-    }
-	50% {
-        transform: scale(1);
-        opacity: 0.8;
-    }
-  100% {
-        transform: scale(0.1);
-        opacity: 0.2;
-    }
+@keyframes loading-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.45; }
+  50%      { transform: scale(1.28); opacity: 0.08; }
 }
 
 /*==============SPIN-Y=====================*/
@@ -238,7 +111,7 @@
 }
 
 @media screen and (max-width: 768px) {
-  .circle-container {
+  .loading-indicator {
     display: none;
   }
 }
