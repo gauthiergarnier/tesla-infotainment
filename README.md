@@ -10,6 +10,7 @@ Experience a simulated Tesla infotainment system in your browser!
 - Interactive infotainment system simulation. Play a podcast, adjust the volume, etc.
 - Put the car in reverse (Click the R) and see what's behind you!
 - Try searching on the map. Turn on traffic or different map styles.
+- Open the app shelf and launch **Browser** — its web view runs [codriver](https://app.codriver.io) in demo mode: set a start and a destination and watch a synthetic car drive the route.
 - Check out the keyboard shortcuts below for more controls.
 - Working on more responsive design for various screen sizes. Works best on desktop but you can try it out on your phone in landscape mode too. 
 - Adding features periodically. Leave a feature request in the issues section ^_^
@@ -58,6 +59,31 @@ To run the project locally:
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Browser app: codriver demo mode
+
+The Browser app's web view opens on codriver's demo mode (`?demo=1`) — a
+synthetic driver that routes between two addresses and drives the polyline,
+accelerating to the road limit and braking for corners.
+
+Two env vars control it (see `.env.template`):
+
+| Var | Purpose |
+|---|---|
+| `REACT_APP_CODRIVER_ENV` | `staging` or `production` — which codriver deployment to frame. Defaults to `production` for a production build and `staging` for everything else. |
+| `REACT_APP_CODRIVER_DEMO_URL` | Full URL override, used verbatim. For running both apps locally: `http://localhost:4399/?demo=1`. |
+
+**codriver has to agree to be framed.** It sends `X-Frame-Options: DENY` to
+every caller by default. Its server relaxes that for demo page loads only, and
+only when `DEMO_FRAME_ANCESTORS` names the origins allowed to frame them:
+
+```
+DEMO_FRAME_ANCESTORS="https://gauthiergarnier.github.io http://localhost:3000"
+```
+
+Without it the web view renders blank — the browser reports the refusal to its
+own console and nothing else. The Browser app notices a frame that never loads
+and says so, with the fix, after a few seconds.
+
 ## Build for Production
 To create a production-ready build:
 
@@ -72,6 +98,17 @@ To make this project work as a Github Page, I added this command to deploy to a 
 
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+## License
+
+MIT — see [`LICENSE`](LICENSE). This is a fork of
+[jamesalmeida/tesla-infotainment](https://github.com/jamesalmeida/tesla-infotainment);
+the copyright is James Almeida's and the notice travels with every copy, this
+one included.
+
+The licence covers the code in this repository and nothing else. The 3D model,
+the loading animations and the OutRun game credited below each arrive under
+their own terms — check them before redistributing a build.
 
 ### Thanks
 - Want to thank Ameer Studio for sharing the [3D model of the Tesla Model 3](https://sketchfab.com/3d-models/tesla-2018-model-3-5ef9b845aaf44203b6d04e2c677e444f) I'm using in the simulator.

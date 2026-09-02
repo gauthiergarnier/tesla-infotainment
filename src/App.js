@@ -8,7 +8,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { MapNavigation } from './components/MapNavigation/MapNavigation';
 import { MusicPanel } from './components/MusicPanel/MusicPanel';
 import { Modal } from './components/Modal/Modal';
-import VerticalSliderPanel from './components/VerticalSliderPanel/VerticalSliderPanel';
+import VerticalSliderPanel, { LAUNCHABLE_APPS } from './components/VerticalSliderPanel/VerticalSliderPanel';
 import BtmNavBar from './components/BtmNavBar/BtmNavBar';
 import CarLock from './components/CarLock/CarLock';
 import VolumeControl from './components/VolumeControl/VolumeControl';
@@ -106,6 +106,16 @@ function App() {
     setActiveModal(null);
   };
 
+  // Launching from the shelf: close the shelf first, or the app slides up
+  // underneath the modal that opened it. Icons without a component behind them
+  // stay inert rather than sliding up an empty panel.
+  const handleShelfAppClick = (appName) => {
+    if (!LAUNCHABLE_APPS.has(appName)) return;
+    setIsShelfOpen(false);
+    setActiveModal(null);
+    handleNavIconClick(appName);
+  };
+
   const handleSliderClose = () => {
     if (!isCameraForced) {
       setIsSliderOpen(false);
@@ -177,7 +187,11 @@ function App() {
             </div>
             <div className="appShelf">
               {apps.map((icon, index) => (
-                <div key={index} className="appShelfIcon">
+                <div
+                  key={index}
+                  className={`appShelfIcon ${LAUNCHABLE_APPS.has(icon) ? 'launchable no-select' : 'unavailable'}`}
+                  onClick={() => handleShelfAppClick(icon)}
+                >
                   <img 
                     src={getImagePath(`app-${icon}.svg`)} 
                     alt={`${icon} icon`} 

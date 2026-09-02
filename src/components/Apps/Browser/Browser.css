@@ -1,0 +1,188 @@
+.browser {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 100%;
+    background-color: #e2e2e2;
+    font-size: 0.85em;
+}
+
+.browserChrome {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    flex: 0 0 auto;
+    background-color: #d6d6d6;
+    border-bottom: 1px solid #bdbdbd;
+}
+
+.browserNavButtons {
+    display: flex;
+    gap: 4px;
+}
+
+.browserBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 30px;
+    height: 30px;
+    padding: 0 6px;
+    border: none;
+    border-radius: 6px;
+    background-color: #c4c4c4;
+    color: #1c1c1c;
+    font-size: 1.15em;
+    line-height: 1;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.browserBtn.wide {
+    padding: 0 16px;
+    font-size: 0.85em;
+}
+
+.browserBtn:hover:not(:disabled) {
+    background-color: #b3b3b3;
+}
+
+.browserBtn:active:not(:disabled) {
+    background-color: #a0a0a0;
+}
+
+.browserBtn:disabled {
+    opacity: 0.35;
+    cursor: default;
+}
+
+.browserAddressForm {
+    position: relative;
+    flex: 1 1 auto;
+    display: flex;
+    align-items: center;
+}
+
+.browserAddress {
+    width: 100%;
+    height: 30px;
+    padding: 0 34px 0 12px;
+    border: 1px solid #bdbdbd;
+    border-radius: 15px;
+    background-color: #f5f5f5;
+    color: #1c1c1c;
+    font: inherit;
+    outline: none;
+}
+
+.browserAddress:focus {
+    border-color: rgb(0, 157, 255);
+    background-color: #ffffff;
+}
+
+/* Sits inside the address pill, the way a car browser shows page progress. */
+.browserSpinner {
+    position: absolute;
+    right: 11px;
+    width: 13px;
+    height: 13px;
+    border: 2px solid #b3b3b3;
+    border-top-color: rgb(0, 157, 255);
+    border-radius: 50%;
+    animation: browserSpin 0.7s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes browserSpin {
+    to { transform: rotate(360deg); }
+}
+
+.browserShortcuts {
+    display: flex;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.browserShortcut {
+    height: 30px;
+    padding: 0 12px;
+    border: none;
+    border-radius: 15px;
+    background-color: #c4c4c4;
+    color: #1c1c1c;
+    font: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.browserShortcut:hover {
+    background-color: #b3b3b3;
+}
+
+.browserShortcut.active {
+    background-color: #1c1c1c;
+    color: #ffffff;
+}
+
+.browserViewport {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    background-color: #ffffff;
+}
+
+.browserFrame {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.browserBlankHint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 5%;
+    text-align: center;
+    background-color: rgba(245, 245, 245, 0.97);
+}
+
+.browserBlankHint img {
+    width: 48px;
+    opacity: 0.5;
+}
+
+.browserBlankHint h3 {
+    margin: 0;
+}
+
+.browserBlankHint p {
+    margin: 0;
+    max-width: 46em;
+    line-height: 1.5;
+    color: #4a4a4a;
+}
+
+.browserBlankHint code {
+    padding: 1px 5px;
+    margin: 0 2px;
+    border-radius: 4px;
+    background-color: #dcdcdc;
+    font-size: 0.92em;
+    word-break: break-all;
+}
+
+.browserBlankHintFix {
+    color: #1c1c1c;
+}
+
+.browserBlankHintActions {
+    display: flex;
+    gap: 10px;
+    margin-top: 6px;
+}

@@ -4,11 +4,28 @@ import { AppleMusic } from '../Apps/AppleMusic/AppleMusic';
 import { Arcade } from '../Apps/Arcade/Arcade';
 import { BackupCam } from '../Apps/BackupCam/BackupCam';
 import { Bluetooth } from '../Apps/Bluetooth/Bluetooth';
+import { Browser } from '../Apps/Browser/Browser';
 import { Calendar } from '../Apps/Calendar/Calendar';
 import { CarSettings } from '../Apps/CarSettings/CarSettings';
 import { Dashcam } from '../Apps/Dashcam/Dashcam';
 import { Podcasts } from '../Apps/Podcasts/Podcasts';
 import { Toybox } from '../Apps/Toybox/Toybox';
+
+// The icons that actually open something. The app shelf reads this so a tap on
+// a placeholder icon does nothing visible instead of sliding up an empty panel —
+// keep it in step with the switch in renderContent below.
+export const LAUNCHABLE_APPS = new Set([
+    'apple-music',
+    'arcade',
+    'bluetooth',
+    'browser',
+    'calendar',
+    'camera',
+    'car-settings',
+    'dashcam',
+    'podcasts',
+    'toybox',
+]);
 
 const VerticalSliderPanel = ({ isOpen, activeIcon, onClose, isCameraForced }) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -80,6 +97,8 @@ const VerticalSliderPanel = ({ isOpen, activeIcon, onClose, isCameraForced }) =>
                 return <Arcade />;
             case 'bluetooth':
                 return <Bluetooth />;
+            case 'browser':
+                return <Browser />;
             case 'calendar':
                 return <Calendar />;
             case 'camera':

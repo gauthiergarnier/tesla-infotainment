@@ -24,6 +24,10 @@ jobs:
     - name: Create env file
       run: |
         echo "REACT_APP_GOOGLE_MAPS_API_KEY=${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}" >> .env
+        # Which codriver deployment the Browser app's web view frames (ALL-25).
+        # Set the CODRIVER_ENV repository variable to `staging` to point the
+        # published page at staging — demo mode is not on production codriver yet.
+        echo "REACT_APP_CODRIVER_ENV=${{ vars.CODRIVER_ENV || 'production' }}" >> .env
 
     - name: Install dependencies
       run: npm install

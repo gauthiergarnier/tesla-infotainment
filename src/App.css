@@ -299,6 +299,19 @@ html, body { width:100%;  overflow: hidden; }
   width: 50%;
 }
 
+.appShelfIcon.launchable {
+  cursor: pointer;
+}
+
+.appShelfIcon.launchable:active {
+  transform: scale(0.94);
+}
+
+/* Placeholder icons — drawn, but with nothing behind them yet. */
+.appShelfIcon.unavailable {
+  opacity: 0.45;
+}
+
 .customizeBtn {
   position: absolute;
   top: -53px;
